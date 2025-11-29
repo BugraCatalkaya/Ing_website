@@ -5,7 +5,11 @@ export const QuizHistory = ({ history, onDeleteResult, onClearHistory }) => {
     const [showClearConfirm, setShowClearConfirm] = useState(false);
 
     const formatDate = (isoDate) => {
+        if (!isoDate) return 'Just now';
+
         const date = new Date(isoDate);
+        if (isNaN(date.getTime())) return 'Just now';
+
         const now = new Date();
         const diffMs = now - date;
         const diffMins = Math.floor(diffMs / 60000);

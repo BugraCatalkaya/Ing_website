@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { QuizQuestion } from './QuizQuestion';
 import { QuizResults } from './QuizResults';
 import './Quiz.css';
@@ -20,6 +20,7 @@ export const Quiz = ({ quiz, words, onQuizComplete }) => {
 
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [showExitConfirm, setShowExitConfirm] = useState(false);
+    const savedRef = useRef(false);
 
     const categories = ['all', ...new Set(words.map(w => w.category || 'General'))];
 
@@ -27,9 +28,18 @@ export const Quiz = ({ quiz, words, onQuizComplete }) => {
         ? words
         : words.filter(w => w.category === selectedCategory);
 
+    // Reset saved state when quiz is not complete (new quiz started)
     useEffect(() => {
-        if (isComplete) {
+        if (!isComplete) {
+            savedRef.current = false;
+        }
+    }, [isComplete]);
+
+    // Save results only once when quiz completes
+    useEffect(() => {
+        if (isComplete && !savedRef.current) {
             onQuizComplete(getResults());
+            savedRef.current = true;
         }
     }, [isComplete, onQuizComplete, getResults]);
 
