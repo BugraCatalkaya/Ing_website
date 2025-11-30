@@ -98,6 +98,10 @@ function AuthenticatedApp() {
         setCurrentView(view);
       }
     } else {
+      // If leaving quiz view and quiz is finished, reset it so it doesn't trigger save again on return
+      if (currentView === 'quiz' && quiz.isComplete) {
+        quiz.resetQuiz();
+      }
       setCurrentView(view);
     }
   };
