@@ -7,12 +7,16 @@ export const Flashcard = ({ words }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState('all');
+    const [selectedFolder, setSelectedFolder] = useState('all');
 
     const categories = ['all', ...new Set(words.map(w => w.category || 'General'))];
+    const folders = ['all', ...new Set(words.map(w => w.folder || 'General'))];
 
-    const filteredWords = selectedCategory === 'all'
-        ? words
-        : words.filter(w => w.category === selectedCategory);
+    const filteredWords = words.filter(w => {
+        const matchesCategory = selectedCategory === 'all' || (w.category || 'General') === selectedCategory;
+        const matchesFolder = selectedFolder === 'all' || (w.folder || 'General') === selectedFolder;
+        return matchesCategory && matchesFolder;
+    });
 
     const handleNext = useCallback((e) => {
         e?.stopPropagation();
@@ -32,11 +36,11 @@ export const Flashcard = ({ words }) => {
         setIsFlipped(prev => !prev);
     }, []);
 
-    // Reset index when category changes
+    // Reset index when category or folder changes
     useEffect(() => {
         setCurrentIndex(0);
         setIsFlipped(false);
-    }, [selectedCategory]);
+    }, [selectedCategory, selectedFolder]);
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -78,25 +82,50 @@ export const Flashcard = ({ words }) => {
             <h2>Study Mode</h2>
 
             <div className="category-selection-container">
-                <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="study-category-select"
-                    onKeyDown={(e) => {
-                        // Prevent arrow keys from triggering flashcard navigation
-                        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' ||
-                            e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                            e.stopPropagation();
-                        }
-                    }}
-                >
-                    <option value="all">All Categories ({words.length})</option>
-                    {categories.filter(c => c !== 'all').map(c => (
-                        <option key={c} value={c}>
-                            {c} ({words.filter(w => w.category === c).length})
-                        </option>
-                    ))}
-                </select>
+                <div className="filter-group">
+                    <label htmlFor="study-folder" className="filter-label">Filter by Folder:</label>
+                    <select
+                        id="study-folder"
+                        value={selectedFolder}
+                        onChange={(e) => setSelectedFolder(e.target.value)}
+                        className="study-category-select"
+                        onKeyDown={(e) => {
+                            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' ||
+                                e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                                e.stopPropagation();
+                            }
+                        }}
+                    >
+                        <option value="all">All Folders</option>
+                        {folders.filter(f => f !== 'all').map(f => (
+                            <option key={f} value={f}>📁 {f}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="filter-group">
+                    <label htmlFor="study-category" className="filter-label">Filter by Set:</label>
+                    <select
+                        id="study-category"
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="study-category-select"
+                        onKeyDown={(e) => {
+                            // Prevent arrow keys from triggering flashcard navigation
+                            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' ||
+                                e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                                e.stopPropagation();
+                            }
+                        }}
+                    >
+                        <option value="all">All Categories</option>
+                        {categories.filter(c => c !== 'all').map(c => (
+                            <option key={c} value={c}>
+                                {c}
+                            </option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
             {filteredWords.length === 0 ? (
@@ -129,7 +158,10 @@ export const Flashcard = ({ words }) => {
                                     🔊
                                 </button>
                                 <div className="flashcard-hint">Click to reveal</div>
-                                <div className="flashcard-category-tag">{currentWord.category || 'General'}</div>
+                                <div className="flashcard-tags">
+                                    <span className="flashcard-tag folder">📁 {currentWord.folder || 'General'}</span>
+                                    <span className="flashcard-tag category">{currentWord.category || 'General'}</span>
+                                </div>
                             </div>
                             <div className="flashcard-back">
                                 <div className="flashcard-label">Türkçe</div>

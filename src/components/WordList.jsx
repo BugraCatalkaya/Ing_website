@@ -5,15 +5,19 @@ import { useSpeech } from '../hooks/useSpeech';
 import { WordPacks } from './WordPacks';
 import './WordList.css';
 
-export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdateCategory, onUpdateWord, onImportWords, categories }) => {
+export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdateCategory, onUpdateWord, onImportWords, categories, selectedFolderFilter, onFolderFilterChange }) => {
     const { speak } = useSpeech();
     const [editingId, setEditingId] = useState(null);
     const [tempCategory, setTempCategory] = useState('');
+    const [tempFolder, setTempFolder] = useState('');
     const [isCreatingNew, setIsCreatingNew] = useState(false);
+    const [isCreatingNewFolder, setIsCreatingNewFolder] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState('');
+    const [newFolderName, setNewFolderName] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('all');
-    const [editForm, setEditForm] = useState({ english: '', turkish: '', example: '', partOfSpeech: '' });
+    // selectedFolderFilter is now a prop
+    const [editForm, setEditForm] = useState({ english: '', turkish: '', example: '', partOfSpeech: '', folder: '' });
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     // Pagination state
@@ -23,36 +27,45 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
     // Reset currentPage to 1 whenever filters or search terms change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, selectedFilter]);
+    }, [searchTerm, selectedFilter, selectedFolderFilter]);
 
     const startEditing = (word) => {
         setEditingId(word.id);
         setTempCategory(word.category || 'General');
+        setTempFolder(word.folder || 'General');
         setEditForm({
             english: word.english,
             turkish: word.turkish,
             example: word.example || '',
-            partOfSpeech: word.partOfSpeech || ''
+            partOfSpeech: word.partOfSpeech || '',
+            folder: word.folder || 'General'
         });
         setIsCreatingNew(false);
+        setIsCreatingNewFolder(false);
         setNewCategoryName('');
+        setNewFolderName('');
     };
 
     const cancelEditing = () => {
         setEditingId(null);
         setTempCategory('');
-        setEditForm({ english: '', turkish: '', example: '', partOfSpeech: '' });
+        setTempFolder('');
+        setEditForm({ english: '', turkish: '', example: '', partOfSpeech: '', folder: '' });
         setIsCreatingNew(false);
+        setIsCreatingNewFolder(false);
         setNewCategoryName('');
+        setNewFolderName('');
     };
 
     const saveEdit = (id) => {
         const categoryToSave = isCreatingNew ? newCategoryName.trim() : tempCategory;
+        const folderToSave = isCreatingNewFolder ? newFolderName.trim() : tempFolder;
 
         if (editForm.english && editForm.turkish) {
             onUpdateWord(id, {
                 ...editForm,
-                category: categoryToSave || 'General'
+                category: categoryToSave || 'General',
+                folder: folderToSave || 'General'
             });
             cancelEditing();
         }
@@ -74,16 +87,29 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
         }
     };
 
+    const handleFolderChange = (e) => {
+        const value = e.target.value;
+        if (value === 'new_folder_custom_value') {
+            setIsCreatingNewFolder(true);
+            setTempFolder('');
+        } else {
+            setIsCreatingNewFolder(false);
+            setTempFolder(value);
+        }
+    };
+
     const uniqueCategories = ['General', ...new Set(categories)].filter(c => c !== 'General').sort();
+    const uniqueFolders = ['General', ...new Set(words.map(w => w.folder || 'General'))].filter(f => f !== 'General').sort();
 
     // Filter words based on selected category AND search term
     const filteredWords = words.filter(word => {
         const matchesCategory = selectedFilter === 'all' || (word.category || 'General') === selectedFilter;
+        const matchesFolder = selectedFolderFilter === 'all' || (word.folder || 'General') === selectedFolderFilter;
         const matchesSearch = searchTerm === '' ||
             word.english.toLowerCase().includes(searchTerm.toLowerCase()) ||
             word.turkish.toLowerCase().includes(searchTerm.toLowerCase());
 
-        return matchesCategory && matchesSearch;
+        return matchesCategory && matchesFolder && matchesSearch;
     });
 
     // Pagination calculations
@@ -93,17 +119,16 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
     const currentWords = filteredWords.slice(indexOfFirstWord, indexOfLastWord);
 
     const allCategories = ['all', ...new Set(words.map(w => w.category || 'General'))];
+    const allFolders = ['all', ...new Set(words.map(w => w.folder || 'General'))];
 
     const handleDeleteCategory = (e) => {
         e.preventDefault();
         e.stopPropagation();
 
-        const wordsToDelete = selectedFilter === 'all'
-            ? words
-            : words.filter(w => (w.category || 'General') === selectedFilter);
+        const wordsToDelete = filteredWords;
 
         if (wordsToDelete.length === 0) {
-            alert("No words found to delete in this category.");
+            alert("No words found to delete in this view.");
             return;
         }
         setShowDeleteConfirm(true);
@@ -111,9 +136,7 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
 
     const confirmDelete = () => {
         const categoryName = selectedFilter === 'all' ? 'All Categories' : selectedFilter;
-        const wordsToDelete = selectedFilter === 'all'
-            ? words
-            : words.filter(w => (w.category || 'General') === selectedFilter);
+        const wordsToDelete = filteredWords;
 
         onDeleteWords(wordsToDelete.map(w => w.id), categoryName);
         if (selectedFilter !== 'all') {
@@ -143,27 +166,49 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
                             >✕</button>
                         )}
                     </div>
-                    <select
-                        value={selectedFilter}
-                        onChange={(e) => setSelectedFilter(e.target.value)}
-                        className="category-filter-select"
-                    >
-                        <option value="all">All Categories ({words.length})</option>
-                        {allCategories.filter(c => c !== 'all').map(c => (
-                            <option key={c} value={c}>
-                                {c} ({words.filter(w => (w.category || 'General') === c).length})
-                            </option>
-                        ))}
-                    </select>
+
+                    <div className="filter-group">
+                        <label htmlFor="folder-filter" className="filter-label">Filter by Folder:</label>
+                        <select
+                            id="folder-filter"
+                            value={selectedFolderFilter}
+                            onChange={(e) => onFolderFilterChange(e.target.value)}
+                            className="category-filter-select"
+                        >
+                            <option value="all">All Folders</option>
+                            {allFolders.filter(f => f !== 'all').map(f => (
+                                <option key={f} value={f}>
+                                    📁 {f}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="filter-group">
+                        <label htmlFor="category-filter" className="filter-label">Filter by Set:</label>
+                        <select
+                            id="category-filter"
+                            value={selectedFilter}
+                            onChange={(e) => setSelectedFilter(e.target.value)}
+                            className="category-filter-select"
+                        >
+                            <option value="all">All Sets</option>
+                            {allCategories.filter(c => c !== 'all').map(c => (
+                                <option key={c} value={c}>
+                                    {c}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                     {words.length > 0 && (
                         <button
                             type="button"
                             className="delete-category-btn"
                             onClick={handleDeleteCategory}
-                            title={selectedFilter === 'all' ? "Delete All Words" : `Delete Category: ${selectedFilter}`}
+                            title="Delete filtered words"
                             style={{ cursor: 'pointer', zIndex: 1000, position: 'relative' }}
                         >
-                            {selectedFilter === 'all' ? '🗑️ Delete All' : '🗑️ Delete Category'}
+                            🗑️
                         </button>
                     )}
                 </div>
@@ -209,6 +254,32 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
                                             />
 
                                             <div className="category-edit-container">
+                                                {/* Folder Edit */}
+                                                {!isCreatingNewFolder ? (
+                                                    <select
+                                                        value={tempFolder}
+                                                        onChange={handleFolderChange}
+                                                        className="category-edit-select"
+                                                        style={{ marginRight: '0.5rem' }}
+                                                    >
+                                                        <option value="General">General</option>
+                                                        {uniqueFolders.map(f => (
+                                                            <option key={f} value={f}>{f}</option>
+                                                        ))}
+                                                        <option value="new_folder_custom_value">+ New Folder</option>
+                                                    </select>
+                                                ) : (
+                                                    <input
+                                                        type="text"
+                                                        value={newFolderName}
+                                                        onChange={(e) => setNewFolderName(e.target.value)}
+                                                        placeholder="New folder name"
+                                                        className="category-edit-input"
+                                                        style={{ marginRight: '0.5rem' }}
+                                                    />
+                                                )}
+
+                                                {/* Category Edit */}
                                                 {!isCreatingNew ? (
                                                     <select
                                                         value={tempCategory}
@@ -219,14 +290,14 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
                                                         {uniqueCategories.map(c => (
                                                             <option key={c} value={c}>{c}</option>
                                                         ))}
-                                                        <option value="new_category_custom_value">+ New Category</option>
+                                                        <option value="new_category_custom_value">+ New Set</option>
                                                     </select>
                                                 ) : (
                                                     <input
                                                         type="text"
                                                         value={newCategoryName}
                                                         onChange={(e) => setNewCategoryName(e.target.value)}
-                                                        placeholder="New category name"
+                                                        placeholder="New set name"
                                                         className="category-edit-input"
                                                     />
                                                 )}
@@ -274,16 +345,19 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
                                                     {word.example && <div className="word-example">"{word.example}"</div>}
                                                 </div>
                                             </div>
-                                            <div
-                                                className="word-category-badge"
-                                            >
-                                                {word.category || 'General'}
-                                            </div>
-                                            {word.partOfSpeech && (
-                                                <div className="word-pos-badge">
-                                                    {word.partOfSpeech}
+                                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                                <div className="word-category-badge" style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#6366f1', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                                                    📁 {word.folder || 'General'}
                                                 </div>
-                                            )}
+                                                <div className="word-category-badge">
+                                                    {word.category || 'General'}
+                                                </div>
+                                                {word.partOfSpeech && (
+                                                    <div className="word-pos-badge">
+                                                        {word.partOfSpeech}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </>
                                     )}
                                 </div>

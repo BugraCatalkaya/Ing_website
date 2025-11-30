@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSpeech } from '../hooks/useSpeech';
 import './WordForm.css';
 
-export const WordForm = ({ onAddWord, categories }) => {
+export const WordForm = ({ onAddWord, categories, folders = ['General'] }) => {
     const { speak } = useSpeech();
     const [englishWord, setEnglishWord] = useState('');
     const [turkishMeaning, setTurkishMeaning] = useState('');
@@ -11,6 +11,9 @@ export const WordForm = ({ onAddWord, categories }) => {
     const [selectedCategory, setSelectedCategory] = useState(categories[0] || 'General');
     const [newCategory, setNewCategory] = useState('');
     const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+    const [selectedFolder, setSelectedFolder] = useState(folders[0] || 'General');
+    const [newFolder, setNewFolder] = useState('');
+    const [isCreatingFolder, setIsCreatingFolder] = useState(false);
     const [isTranslating, setIsTranslating] = useState(false);
     const [wordForms, setWordForms] = useState([]);
     const [selectedPartOfSpeech, setSelectedPartOfSpeech] = useState('');
@@ -18,65 +21,39 @@ export const WordForm = ({ onAddWord, categories }) => {
     const handleAutoTranslate = async () => {
         if (!englishWord.trim()) return;
         setIsTranslating(true);
-        setWordForms([]); // Clear previous forms
-        setSelectedPartOfSpeech(''); // Clear selection
         try {
-            // 1. Get Turkish Translation
-            const translateRes = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(englishWord)}&langpair=en|tr`);
+            // 1. Get Turkish translation
+            const translateRes = await fetch(`https://api.mymemory.translated.net/get?q=${englishWord}&langpair=en|tr`);
             const translateData = await translateRes.json();
             if (translateData.responseData && translateData.responseData.translatedText) {
                 setTurkishMeaning(translateData.responseData.translatedText);
             }
 
-            // 2. Get Example Sentence & Word Forms
-            const dictRes = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(englishWord)}`);
+            // 2. Get English definition/examples/forms
+            const dictRes = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${englishWord}`);
             const dictData = await dictRes.json();
 
             if (Array.isArray(dictData) && dictData.length > 0) {
-                // Extract parts of speech with filtering for rare usages
-                const meanings = dictData[0].meanings;
-
-                // Calculate definition counts for each POS
-                const posCounts = meanings.map(m => ({
-                    pos: m.partOfSpeech,
-                    count: m.definitions.length
-                }));
-
-                // Find the maximum number of definitions any POS has
-                const maxCount = Math.max(...posCounts.map(p => p.count));
-
-                // Filter logic
-                const filteredForms = posCounts
-                    .filter(p => {
-                        if (p.count === maxCount) return true;
-                        if (maxCount >= 3 && p.count === 1) return false;
-                        return true;
-                    })
-                    .map(p => p.pos);
-
-                setWordForms([...new Set(filteredForms)]);
-
-                // Auto-select the first one if available
-                if (filteredForms.length > 0) {
-                    setSelectedPartOfSpeech(filteredForms[0]);
-                }
-
+                const entry = dictData[0];
+                const meanings = entry.meanings || [];
                 let foundExample = '';
-                for (const meaning of dictData[0].meanings) {
-                    for (const def of meaning.definitions) {
-                        if (def.example) {
-                            foundExample = def.example;
-                            break;
-                        }
+                let forms = [];
+
+                // Collect forms (noun, verb, etc.)
+                meanings.forEach(m => {
+                    forms.push(m.partOfSpeech);
+                    if (!foundExample && m.definitions) {
+                        const defWithExample = m.definitions.find(d => d.example);
+                        if (defWithExample) foundExample = defWithExample.example;
                     }
-                    if (foundExample) break;
-                }
-                if (foundExample) {
-                    setExampleSentence(foundExample);
-                }
+                });
+
+                if (foundExample) setExampleSentence(foundExample);
+                setWordForms([...new Set(forms)]); // Unique forms
+                if (forms.length > 0) setSelectedPartOfSpeech(forms[0]);
             }
         } catch (error) {
-            console.error("Auto-translate failed:", error);
+            console.error("Translation error:", error);
         } finally {
             setIsTranslating(false);
         }
@@ -90,20 +67,28 @@ export const WordForm = ({ onAddWord, categories }) => {
         }
 
         const categoryToUse = isCreatingCategory ? newCategory.trim() : selectedCategory;
-        if (!categoryToUse) return;
+        const folderToUse = isCreatingFolder ? newFolder.trim() : selectedFolder;
 
-        onAddWord(englishWord, turkishMeaning, categoryToUse, exampleSentence, emoji, selectedPartOfSpeech);
+        if (!categoryToUse || !folderToUse) return;
+
+        onAddWord(englishWord, turkishMeaning, categoryToUse, exampleSentence, emoji, selectedPartOfSpeech, folderToUse);
         setEnglishWord('');
         setTurkishMeaning('');
         setExampleSentence('');
         setEmoji('');
         setWordForms([]); // Clear forms
         setSelectedPartOfSpeech('');
-        // Do not reset category so user can add multiple words to same category
+
+        // Do not reset category/folder so user can add multiple words to same place
         if (isCreatingCategory) {
             setSelectedCategory(categoryToUse);
             setIsCreatingCategory(false);
             setNewCategory('');
+        }
+        if (isCreatingFolder) {
+            setSelectedFolder(folderToUse);
+            setIsCreatingFolder(false);
+            setNewFolder('');
         }
     };
 
@@ -118,7 +103,19 @@ export const WordForm = ({ onAddWord, categories }) => {
         }
     };
 
+    const handleFolderChange = (e) => {
+        const value = e.target.value;
+        if (value === 'new_folder_custom_value') {
+            setIsCreatingFolder(true);
+            setNewFolder('');
+        } else {
+            setIsCreatingFolder(false);
+            setSelectedFolder(value);
+        }
+    };
+
     const uniqueCategories = ['General', ...new Set(categories)].filter(c => c !== 'General').sort();
+    const uniqueFolders = ['General', ...new Set(folders)].filter(f => f !== 'General').sort();
 
     return (
         <div className="word-form-container">
@@ -133,157 +130,172 @@ export const WordForm = ({ onAddWord, categories }) => {
                             value={englishWord}
                             onChange={(e) => setEnglishWord(e.target.value)}
                             placeholder="e.g., Apple"
-                            autoComplete="off"
+                            required
                         />
                         <button
                             type="button"
-                            className="translate-btn-mini"
+                            className="action-btn"
                             onClick={handleAutoTranslate}
-                            disabled={!englishWord || isTranslating}
-                            title="Auto-Translate to Turkish"
-                            style={{ marginRight: '0.5rem', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}
+                            disabled={isTranslating || !englishWord.trim()}
+                            title="Auto Translate & Fill"
                         >
-                            {isTranslating ? '⏳' : '✨ Auto'}
-                        </button>
-                        <button
-                            type="button"
-                            className="speak-btn-mini"
-                            onClick={() => speak(englishWord)}
-                            disabled={!englishWord}
-                            title="Listen to pronunciation"
-                        >
-                            🔊
+                            {isTranslating ? '...' : '✨'}
                         </button>
                     </div>
-                    {wordForms.length > 0 && (
-                        <div className="word-forms-suggestions">
-                            <span className="forms-label">Part of Speech (Select one):</span>
-                            <div className="forms-list">
-                                {wordForms.map(form => (
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="turkish">Turkish Meaning</label>
+                    <input
+                        type="text"
+                        id="turkish"
+                        value={turkishMeaning}
+                        onChange={(e) => setTurkishMeaning(e.target.value)}
+                        placeholder="e.g., Elma"
+                        required
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label>Part of Speech</label>
+                    <div className="pos-selection">
+                        {wordForms.length > 0 && (
+                            <div className="suggested-pos">
+                                {wordForms.map(pos => (
                                     <button
-                                        key={form}
+                                        key={pos}
                                         type="button"
-                                        className={`form-badge ${selectedPartOfSpeech === form ? 'selected' : ''}`}
-                                        onClick={() => setSelectedPartOfSpeech(form)}
+                                        className={`form-badge ${selectedPartOfSpeech === pos ? 'selected' : ''}`}
+                                        onClick={() => setSelectedPartOfSpeech(pos)}
                                     >
-                                        {form}
+                                        {pos}
                                     </button>
                                 ))}
                             </div>
-                        </div>
-                    )}
-                    {/* Manual POS selector if no suggestions or user wants to change */}
-                    <div style={{ marginTop: '0.5rem' }}>
+                        )}
                         <select
                             value={selectedPartOfSpeech}
                             onChange={(e) => setSelectedPartOfSpeech(e.target.value)}
-                            style={{
-                                padding: '0.4rem',
-                                borderRadius: '6px',
-                                border: '1px solid var(--border-color)',
-                                background: 'rgba(30, 35, 60, 0.4)',
-                                color: 'var(--text-secondary)',
-                                fontSize: '0.85rem',
-                                width: 'auto'
-                            }}
+                            className="pos-select-input"
                         >
                             <option value="">Select Type (Optional)</option>
                             <option value="noun">Noun (İsim)</option>
                             <option value="verb">Verb (Fiil)</option>
                             <option value="adjective">Adjective (Sıfat)</option>
                             <option value="adverb">Adverb (Zarf)</option>
-                            <option value="pronoun">Pronoun (Zamir)</option>
                             <option value="preposition">Preposition (Edat)</option>
                             <option value="conjunction">Conjunction (Bağlaç)</option>
+                            <option value="pronoun">Pronoun (Zamir)</option>
                             <option value="interjection">Interjection (Ünlem)</option>
+                            <option value="phrase">Phrase (İfade)</option>
                         </select>
-                    </div>
-                </div>
-
-                <div className="form-row">
-                    <div className="form-group half">
-                        <label htmlFor="turkish">Turkish Meaning</label>
-                        <input
-                            type="text"
-                            id="turkish"
-                            value={turkishMeaning}
-                            onChange={(e) => setTurkishMeaning(e.target.value)}
-                            placeholder="e.g., Elma"
-                            autoComplete="off"
-                        />
-                    </div>
-                    <div className="form-group half">
-                        <label htmlFor="emoji">Emoji (Optional)</label>
-                        <div className="emoji-input-wrapper">
-                            <input
-                                type="text"
-                                id="emoji"
-                                value={emoji}
-                                onChange={(e) => setEmoji(e.target.value)}
-                                placeholder="e.g., 🍎"
-                                className="emoji-input"
-                            />
-                            <div className="quick-emojis">
-                                {['🍎', '🍌', '🍕', '🐶', '🐱', '🚗', '✈️', '🏠', '💻', '📱', '📚', '✏️', '🏃', '🏊', '😊', '🤔', '❤️', '⭐', '💼', '💰'].map(e => (
-                                    <button
-                                        key={e}
-                                        type="button"
-                                        className="emoji-btn"
-                                        onClick={() => setEmoji(e)}
-                                    >
-                                        {e}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
                     </div>
                 </div>
 
                 <div className="form-group">
                     <label htmlFor="example">Example Sentence (Optional)</label>
-                    <input
-                        type="text"
-                        id="example"
-                        value={exampleSentence}
-                        onChange={(e) => setExampleSentence(e.target.value)}
-                        placeholder="e.g., I eat an apple every day."
-                        autoComplete="off"
-                    />
+                    <div className="input-with-action">
+                        <input
+                            type="text"
+                            id="example"
+                            value={exampleSentence}
+                            onChange={(e) => setExampleSentence(e.target.value)}
+                            placeholder="e.g., I ate an apple."
+                        />
+                        <button
+                            type="button"
+                            className="action-btn"
+                            onClick={() => speak(englishWord)}
+                            title="Listen"
+                        >
+                            🔊
+                        </button>
+                    </div>
                 </div>
 
                 <div className="form-group">
-                    <label htmlFor="category">Category</label>
-                    {!isCreatingCategory ? (
-                        <select
-                            id="category"
-                            value={selectedCategory}
-                            onChange={handleCategoryChange}
-                            className="category-select-input"
-                        >
-                            <option value="General">General</option>
-                            {uniqueCategories.map(c => (
-                                <option key={c} value={c}>{c}</option>
-                            ))}
-                            <option value="new_category_custom_value">+ Create New Category</option>
-                        </select>
-                    ) : (
-                        <div className="new-category-input">
-                            <input
-                                type="text"
-                                value={newCategory}
-                                onChange={(e) => setNewCategory(e.target.value)}
-                                placeholder="Enter new category name"
-                                autoFocus
-                            />
-                            <button
-                                type="button"
-                                className="cancel-category-btn"
-                                onClick={() => setIsCreatingCategory(false)}
+                    <label htmlFor="emoji">Emoji / Icon (Optional)</label>
+                    <input
+                        type="text"
+                        id="emoji"
+                        value={emoji}
+                        onChange={(e) => setEmoji(e.target.value)}
+                        placeholder="e.g., 🍎"
+                        className="emoji-input"
+                    />
+                </div>
+
+                {/* Insert Folder Selection Here */}
+                <div className="form-row">
+                    <div className="form-group half">
+                        <label htmlFor="folder">Folder (Group)</label>
+                        {!isCreatingFolder ? (
+                            <select
+                                id="folder"
+                                value={selectedFolder}
+                                onChange={handleFolderChange}
+                                className="category-select-input"
                             >
-                                Cancel
-                            </button>
-                        </div>
-                    )}
+                                <option value="General">General</option>
+                                {uniqueFolders.map(f => (
+                                    <option key={f} value={f}>{f}</option>
+                                ))}
+                                <option value="new_folder_custom_value">+ Create New Folder</option>
+                            </select>
+                        ) : (
+                            <div className="new-category-input">
+                                <input
+                                    type="text"
+                                    value={newFolder}
+                                    onChange={(e) => setNewFolder(e.target.value)}
+                                    placeholder="Enter new folder name"
+                                    autoFocus
+                                />
+                                <button
+                                    type="button"
+                                    className="cancel-category-btn"
+                                    onClick={() => setIsCreatingFolder(false)}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="form-group half">
+                        <label htmlFor="category">Set (Category)</label>
+                        {!isCreatingCategory ? (
+                            <select
+                                id="category"
+                                value={selectedCategory}
+                                onChange={handleCategoryChange}
+                                className="category-select-input"
+                            >
+                                <option value="General">General</option>
+                                {uniqueCategories.map(c => (
+                                    <option key={c} value={c}>{c}</option>
+                                ))}
+                                <option value="new_category_custom_value">+ Create New Set</option>
+                            </select>
+                        ) : (
+                            <div className="new-category-input">
+                                <input
+                                    type="text"
+                                    value={newCategory}
+                                    onChange={(e) => setNewCategory(e.target.value)}
+                                    placeholder="Enter new set name"
+                                    autoFocus
+                                />
+                                <button
+                                    type="button"
+                                    className="cancel-category-btn"
+                                    onClick={() => setIsCreatingCategory(false)}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <button type="submit" className="add-btn">

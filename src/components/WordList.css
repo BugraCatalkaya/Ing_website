@@ -24,21 +24,6 @@
     margin-bottom: 0;
     background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    flex: 1;
-    min-width: 200px;
-}
-
-.filter-controls {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
-
-.delete-category-btn {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
     border: 1px solid rgba(239, 68, 68, 0.3);
     padding: 0.5rem 1rem;
     border-radius: 8px;

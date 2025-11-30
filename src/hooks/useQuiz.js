@@ -113,11 +113,15 @@ export const useQuiz = (words) => {
     const [reviewMode, setReviewMode] = useState(false);
     const [questionMode, setQuestionMode] = useState('mixed');
     const [quizCategory, setQuizCategory] = useState('all');
+    const [quizFolder, setQuizFolder] = useState('all');
 
-    const startQuiz = useCallback((questionsToUse = null, mode = 'mixed', category = 'all') => {
+    const startQuiz = useCallback((questionsToUse = null, mode = 'mixed', category = 'all', folder = 'all') => {
         let quizWords = words;
         if (category !== 'all') {
-            quizWords = words.filter(w => w.category === category);
+            quizWords = quizWords.filter(w => w.category === category);
+        }
+        if (folder !== 'all') {
+            quizWords = quizWords.filter(w => (w.folder || 'General') === folder);
         }
 
         const quizQuestions = questionsToUse || generateQuestions(quizWords, 10, mode);
@@ -130,6 +134,7 @@ export const useQuiz = (words) => {
         setReviewMode(!!questionsToUse);
         setQuestionMode(mode);
         setQuizCategory(category);
+        setQuizFolder(folder);
         return true;
     }, [words]);
 
@@ -186,10 +191,11 @@ export const useQuiz = (words) => {
             results,
             wrongAnswers,
             category: quizCategory,
+            folder: quizFolder,
             mode: questionMode,
             isReview: reviewMode
         };
-    }, [questions, answers, checkAnswer, quizCategory, reviewMode]);
+    }, [questions, answers, checkAnswer, quizCategory, quizFolder, reviewMode]);
 
     const startReviewQuiz = useCallback(() => {
         const results = getResults();

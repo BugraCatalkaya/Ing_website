@@ -26,6 +26,7 @@ function AuthenticatedApp() {
   const [isRecovering, setIsRecovering] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [selectedFolderFilter, setSelectedFolderFilter] = useState('all');
 
   // Close login modal if user logs in
   useEffect(() => {
@@ -278,8 +279,13 @@ function AuthenticatedApp() {
               onAddWord={(...args) => {
                 addWord(...args);
                 addToast('Word added successfully!', 'success');
+                // args[6] is the folder. If provided, switch filter to it.
+                if (args[6] && args[6] !== 'General') {
+                  setSelectedFolderFilter(args[6]);
+                }
               }}
               categories={['General', ...new Set(words.map(w => w.category || 'General'))]}
+              folders={['General', ...new Set(words.map(w => w.folder || 'General'))]}
             />
             <WordList
               words={words}
@@ -295,8 +301,9 @@ function AuthenticatedApp() {
                 importWords(newWords);
                 addToast(`Imported ${newWords.length} words!`, 'success');
               }}
-
               categories={['General', ...new Set(words.map(w => w.category || 'General'))]}
+              selectedFolderFilter={selectedFolderFilter}
+              onFolderFilterChange={setSelectedFolderFilter}
             />
           </div>
         )}

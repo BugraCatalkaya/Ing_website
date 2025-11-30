@@ -67,11 +67,12 @@ export const useWords = () => {
         }
     }, [words, currentUser, loading]);
 
-    const addWord = async (englishWord, turkishMeaning, category = 'General', exampleSentence = '', emoji = '', partOfSpeech = '') => {
+    const addWord = async (englishWord, turkishMeaning, category = 'General', exampleSentence = '', emoji = '', partOfSpeech = '', folder = 'General') => {
         const newWordData = {
             english: englishWord.trim(),
             turkish: turkishMeaning.trim(),
             category: category.trim() || 'General',
+            folder: folder.trim() || 'General',
             example: exampleSentence.trim(),
             emoji: emoji.trim(),
             partOfSpeech: partOfSpeech.trim(),
@@ -209,8 +210,10 @@ export const useWords = () => {
                 english: w.english,
                 turkish: w.turkish,
                 category: w.category || 'General',
+                folder: w.folder || 'General',
                 example: w.example || '',
                 emoji: w.emoji || '',
+                partOfSpeech: w.partOfSpeech || '',
                 level: w.level || 1,
                 nextReview: w.nextReview || new Date().toISOString(),
                 createdAt: w.createdAt || new Date().toISOString(),
