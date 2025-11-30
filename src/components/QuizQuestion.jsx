@@ -14,10 +14,19 @@ export const QuizQuestion = ({ question, onSubmit, questionNumber, totalQuestion
 
     // Auto-focus input when question changes
     useEffect(() => {
-        if (question && question.type === 'fill-in' && inputRef.current) {
+        if (question && (question.type === 'fill-in' || question.type === 'listening' || question.type === 'reverse') && inputRef.current) {
             inputRef.current.focus();
         }
-    }, [question?.id, question?.type]);
+
+        // Auto-play audio for listening mode
+        if (question && question.type === 'listening') {
+            // Small delay to ensure smooth transition
+            const timer = setTimeout(() => {
+                speak(question.question);
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [question?.id, question?.type, speak, question?.question]);
 
     // Update input when speech is recognized
     useEffect(() => {
@@ -35,6 +44,23 @@ export const QuizQuestion = ({ question, onSubmit, questionNumber, totalQuestion
 
         const answer = question.type === 'multiple-choice' ? selectedAnswer : fillInAnswer;
         if (!answer.trim()) return;
+
+        // Check correctness immediately to play sound
+        let correct = false;
+        if (question.type === 'multiple-choice') {
+            correct = answer === question.correctAnswer;
+        } else {
+            const userAnswer = answer.trim().toLowerCase();
+            const correctAnswers = question.correctAnswer.split(',').map(a => a.trim().toLowerCase());
+            correct = correctAnswers.some(correctAns => userAnswer === correctAns);
+        }
+
+        if (correct) {
+            // Play success sound
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3'); // Simple chime sound
+            audio.volume = 0.5;
+            audio.play().catch(e => console.log('Audio play failed', e));
+        }
 
         setSubmitted(true);
 
@@ -99,24 +125,41 @@ export const QuizQuestion = ({ question, onSubmit, questionNumber, totalQuestion
 
             <div className="question-card">
                 <div className="question-type-badge">
-                    {question.type === 'multiple-choice' ? '📝 Multiple Choice' : '✍️ Fill in the Blank'}
+                    {question.type === 'multiple-choice' && '📝 Multiple Choice'}
+                    {question.type === 'fill-in' && '✍️ Fill in the Blank'}
+                    {question.type === 'listening' && '🎧 Listening Challenge'}
+                    {question.type === 'reverse' && '🔄 Reverse Translation'}
                 </div>
 
                 <div className="question-text-wrapper">
-                    <h3 className="question-text">{question.question}</h3>
-                    <button
-                        className="speak-btn-quiz"
-                        onClick={() => speak(question.question)}
-                        title="Listen to question"
-                    >
-                        🔊
-                    </button>
+                    {question.type === 'listening' ? (
+                        <div
+                            className="listening-placeholder clickable"
+                            onClick={() => speak(question.question, 'en-US')}
+                            title="Click to play audio"
+                        >
+                            <span className="listening-icon">🔊</span>
+                            <p>Click to listen</p>
+                        </div>
+                    ) : (
+                        <>
+                            <h3 className="question-text">{question.question}</h3>
+                            <button
+                                className="speak-btn-quiz"
+                                onClick={() => speak(question.question, question.type === 'reverse' ? 'tr-TR' : 'en-US')}
+                                title="Listen to question"
+                            >
+                                🔊
+                            </button>
+                        </>
+                    )}
                 </div>
 
                 <p className="question-prompt">
-                    {question.type === 'multiple-choice'
-                        ? 'Select the correct Turkish translation:'
-                        : 'Type or speak the Turkish translation:'}
+                    {question.type === 'multiple-choice' && 'Select the correct Turkish translation:'}
+                    {question.type === 'fill-in' && 'Type or speak the Turkish translation:'}
+                    {question.type === 'listening' && 'Type the Turkish translation of what you hear:'}
+                    {question.type === 'reverse' && 'Type the English translation:'}
                 </p>
 
                 {question.type === 'multiple-choice' ? (

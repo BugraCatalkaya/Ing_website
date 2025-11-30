@@ -4,10 +4,11 @@ export const QuizResults = ({ results, onReviewWrong, onRetake, reviewMode }) =>
     const { total, correct, incorrect, percentage, wrongAnswers } = results;
 
     const getGrade = () => {
-        if (percentage >= 90) return { text: 'Excellent!', emoji: '🌟' };
-        if (percentage >= 70) return { text: 'Good Job!', emoji: '👍' };
-        if (percentage >= 50) return { text: 'Keep Practicing!', emoji: '💪' };
-        return { text: 'Need More Practice', emoji: '📚' };
+        if (percentage === 100) return { text: 'Mükemmel Sonuç! Bravo! 🎉', emoji: '🏆', subtext: 'Hiç hatan yok, harikasın!' };
+        if (percentage >= 90) return { text: 'Harika İş! 🌟', emoji: '🌟', subtext: 'Neredeyse kusursuz!' };
+        if (percentage >= 70) return { text: 'Güzel Sonuç! 👍', emoji: '👍', subtext: 'Gayet iyisin, devam et!' };
+        if (percentage >= 50) return { text: 'Fena Değil! 💪', emoji: '💪', subtext: 'Biraz daha pratikle daha iyi olacak.' };
+        return { text: 'Daha Fazla Çalışmalısın 📚', emoji: '📚', subtext: 'Pes etmek yok, tekrar dene!' };
     };
 
     const grade = getGrade();
@@ -20,6 +21,7 @@ export const QuizResults = ({ results, onReviewWrong, onRetake, reviewMode }) =>
                 <div className="score-card">
                     <div className="score-emoji">{grade.emoji}</div>
                     <div className="score-text">{grade.text}</div>
+                    <div className="score-subtext" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{grade.subtext}</div>
                     <div className="score-number">{percentage}%</div>
                     <div className="score-breakdown">
                         <span className="correct-count">✅ {correct} Correct</span>
@@ -29,6 +31,20 @@ export const QuizResults = ({ results, onReviewWrong, onRetake, reviewMode }) =>
 
                 {wrongAnswers.length > 0 && (
                     <div className="wrong-answers-section">
+                        <div className="study-warning" style={{
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            color: '#ef4444',
+                            padding: '0.75rem',
+                            borderRadius: '8px',
+                            marginBottom: '1rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            fontSize: '0.9rem',
+                            fontWeight: '500'
+                        }}>
+                            ⚠️ Bu kelimelere biraz daha çalışmalısın:
+                        </div>
                         <h3>Review Wrong Answers</h3>
                         <div className="wrong-answers-list">
                             {wrongAnswers.map((wa, index) => (

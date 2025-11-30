@@ -117,9 +117,19 @@ export const QuizHistory = ({ history, onDeleteResult, onClearHistory }) => {
                                 <span className="detail-value">{formatDate(entry.date)}</span>
                             </div>
                             <div className="detail-row">
-                                <span className="detail-label">Category:</span>
                                 <span className="detail-value category-badge">
                                     {entry.category === 'all' ? 'All Categories' : entry.category || 'All Categories'}
+                                </span>
+                            </div>
+                            <div className="detail-row">
+                                <span className="detail-label">Mode:</span>
+                                <span className="detail-value mode-badge">
+                                    {entry.mode === 'listening' && '🎧 Listening'}
+                                    {entry.mode === 'reverse' && '🔄 Reverse'}
+                                    {entry.mode === 'fill-in' && '✍️ Fill-in'}
+                                    {entry.mode === 'multiple-choice' && '📝 Multiple Choice'}
+                                    {entry.mode === 'mixed' && '🎲 Mixed'}
+                                    {!entry.mode && '📝 Standard'}
                                 </span>
                             </div>
                         </div>

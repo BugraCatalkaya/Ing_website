@@ -255,13 +255,37 @@
     box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4);
 }
 
-.add-btn:active {
-    transform: translateY(0);
+.word-forms-suggestions {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(99, 102, 241, 0.05);
+    border-radius: 10px;
+    border: 1px dashed var(--border-color);
 }
 
-.btn-icon {
-    font-size: 1.25rem;
-    font-weight: bold;
+.forms-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.forms-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.form-badge {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--accent-primary);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
 }
 
 @media (max-width: 640px) {

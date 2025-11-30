@@ -13,9 +13,12 @@ export const WordForm = ({ onAddWord, categories }) => {
     const [isCreatingCategory, setIsCreatingCategory] = useState(false);
     const [isTranslating, setIsTranslating] = useState(false);
 
+    const [wordForms, setWordForms] = useState([]);
+
     const handleAutoTranslate = async () => {
         if (!englishWord.trim()) return;
         setIsTranslating(true);
+        setWordForms([]); // Clear previous forms
         try {
             // 1. Get Turkish Translation
             const translateRes = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(englishWord)}&langpair=en|tr`);
@@ -24,11 +27,36 @@ export const WordForm = ({ onAddWord, categories }) => {
                 setTurkishMeaning(translateData.responseData.translatedText);
             }
 
-            // 2. Get Example Sentence
+            // 2. Get Example Sentence & Word Forms
             const dictRes = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(englishWord)}`);
             const dictData = await dictRes.json();
 
             if (Array.isArray(dictData) && dictData.length > 0) {
+                // Extract parts of speech with filtering for rare usages
+                const meanings = dictData[0].meanings;
+
+                // Calculate definition counts for each POS
+                const posCounts = meanings.map(m => ({
+                    pos: m.partOfSpeech,
+                    count: m.definitions.length
+                }));
+
+                // Find the maximum number of definitions any POS has
+                const maxCount = Math.max(...posCounts.map(p => p.count));
+
+                // Filter logic:
+                // If the most common usage has 3 or more definitions,
+                // exclude usages that only have 1 definition (likely rare/archaic).
+                const filteredForms = posCounts
+                    .filter(p => {
+                        if (p.count === maxCount) return true; // Always keep the main one
+                        if (maxCount >= 3 && p.count === 1) return false; // Filter rare ones
+                        return true;
+                    })
+                    .map(p => p.pos);
+
+                setWordForms([...new Set(filteredForms)]);
+
                 let foundExample = '';
                 for (const meaning of dictData[0].meanings) {
                     for (const def of meaning.definitions) {
@@ -65,6 +93,7 @@ export const WordForm = ({ onAddWord, categories }) => {
         setTurkishMeaning('');
         setExampleSentence('');
         setEmoji('');
+        setWordForms([]); // Clear forms
         // Do not reset category so user can add multiple words to same category
         if (isCreatingCategory) {
             setSelectedCategory(categoryToUse);
@@ -121,6 +150,16 @@ export const WordForm = ({ onAddWord, categories }) => {
                             🔊
                         </button>
                     </div>
+                    {wordForms.length > 0 && (
+                        <div className="word-forms-suggestions">
+                            <span className="forms-label">Also used as:</span>
+                            <div className="forms-list">
+                                {wordForms.map(form => (
+                                    <span key={form} className="form-badge">{form}</span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="form-row">

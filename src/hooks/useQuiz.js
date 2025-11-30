@@ -48,8 +48,14 @@ const generateQuestions = (words, count = 10, questionMode = 'mixed') => {
             questionType = 'multiple-choice';
         } else if (questionMode === 'fill-in') {
             questionType = 'fill-in';
+        } else if (questionMode === 'listening') {
+            questionType = 'listening';
+        } else if (questionMode === 'reverse') {
+            questionType = 'reverse';
         } else {
-            // mixed mode - random selection
+            // mixed mode - random selection (excluding listening/reverse for now to keep it simple, or include them?)
+            // Let's keep mixed mode as just multiple-choice and fill-in for now, or maybe add reverse?
+            // Let's stick to original mixed behavior for now.
             questionType = Math.random() < 0.5 ? 'multiple-choice' : 'fill-in';
         }
 
@@ -69,6 +75,22 @@ const generateQuestions = (words, count = 10, questionMode = 'mixed') => {
                 question: word.english,
                 correctAnswer: word.turkish,
                 options,
+                word
+            };
+        } else if (questionType === 'listening') {
+            return {
+                id: `q-${word.id}-${index}`,
+                type: 'listening',
+                question: word.english, // The text to be spoken
+                correctAnswer: word.turkish,
+                word
+            };
+        } else if (questionType === 'reverse') {
+            return {
+                id: `q-${word.id}-${index}`,
+                type: 'reverse',
+                question: word.turkish, // Show Turkish
+                correctAnswer: word.english, // Expect English
                 word
             };
         } else {
@@ -164,6 +186,7 @@ export const useQuiz = (words) => {
             results,
             wrongAnswers,
             category: quizCategory,
+            mode: questionMode,
             isReview: reviewMode
         };
     }, [questions, answers, checkAnswer, quizCategory, reviewMode]);
@@ -190,6 +213,22 @@ export const useQuiz = (words) => {
                     question: word.english,
                     correctAnswer: word.turkish,
                     options,
+                    word
+                };
+            } else if (questionType === 'listening') {
+                return {
+                    id: `review-${word.id}-${index}`,
+                    type: 'listening',
+                    question: word.english,
+                    correctAnswer: word.turkish,
+                    word
+                };
+            } else if (questionType === 'reverse') {
+                return {
+                    id: `review-${word.id}-${index}`,
+                    type: 'reverse',
+                    question: word.turkish,
+                    correctAnswer: word.english,
                     word
                 };
             } else {

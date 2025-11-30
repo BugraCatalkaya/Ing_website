@@ -115,6 +115,24 @@ export const Quiz = ({ quiz, words, onQuizComplete }) => {
                                         <span className="type-name">Mixed Mode</span>
                                         <span className="type-desc">Random mix</span>
                                     </button>
+
+                                    <button
+                                        className="quiz-type-btn listening-btn"
+                                        onClick={() => startQuiz(null, 'listening', selectedCategory)}
+                                    >
+                                        <span className="type-icon">🎧</span>
+                                        <span className="type-name">Listening</span>
+                                        <span className="type-desc">Hear & Type</span>
+                                    </button>
+
+                                    <button
+                                        className="quiz-type-btn reverse-btn"
+                                        onClick={() => startQuiz(null, 'reverse', selectedCategory)}
+                                    >
+                                        <span className="type-icon">🔄</span>
+                                        <span className="type-name">Reverse</span>
+                                        <span className="type-desc">TR ➔ EN</span>
+                                    </button>
                                 </div>
                             </div>
                         </>

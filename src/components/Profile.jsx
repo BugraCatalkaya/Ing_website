@@ -180,6 +180,51 @@ export const Profile = ({ words, history, streakStatus, onLogout }) => {
                 </div>
             </div>
 
+            <h2 style={{ marginBottom: '1.5rem', marginTop: '2rem', color: 'var(--text-primary)' }}>Mode Performance 🎯</h2>
+            <div className="stats-grid">
+                {['multiple-choice', 'fill-in', 'listening', 'reverse'].map(mode => {
+                    const modeQuizzes = history.filter(h => h.mode === mode);
+                    const avg = modeQuizzes.length > 0
+                        ? Math.round(modeQuizzes.reduce((acc, curr) => acc + curr.percentage, 0) / modeQuizzes.length)
+                        : 0;
+
+                    const getIcon = (m) => {
+                        switch (m) {
+                            case 'listening': return '🎧';
+                            case 'reverse': return '🔄';
+                            case 'fill-in': return '✍️';
+                            case 'multiple-choice': return '📝';
+                            default: return '❓';
+                        }
+                    };
+
+                    const getLabel = (m) => {
+                        switch (m) {
+                            case 'listening': return 'Listening';
+                            case 'reverse': return 'Reverse';
+                            case 'fill-in': return 'Fill-in';
+                            case 'multiple-choice': return 'Multi-Choice';
+                            default: return m;
+                        }
+                    };
+
+                    return (
+                        <div key={mode} className="stat-card" style={{ opacity: modeQuizzes.length ? 1 : 0.6 }}>
+                            <div className="stat-icon" style={{ fontSize: '1.5rem' }}>{getIcon(mode)}</div>
+                            <div className="stat-info">
+                                <h3 style={{ fontSize: '0.9rem' }}>{getLabel(mode)}</h3>
+                                <p style={{ fontSize: '1.2rem' }}>
+                                    {modeQuizzes.length > 0 ? `${avg}%` : '-'}
+                                </p>
+                                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                                    {modeQuizzes.length} quizzes
+                                </span>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
             <div className="action-buttons" style={{ marginTop: '3rem', justifyContent: 'center' }}>
                 <button
                     onClick={onLogout}
