@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useSpeech } from '../hooks/useSpeech';
-import { DataManagement } from './DataManagement';
+
 import { WordPacks } from './WordPacks';
 import './WordList.css';
 
-export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdateCategory, onUpdateWord, onImportWords, onImportHistory, categories }) => {
+export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdateCategory, onUpdateWord, onImportWords, categories }) => {
     const { speak } = useSpeech();
     const [editingId, setEditingId] = useState(null);
     const [tempCategory, setTempCategory] = useState('');
@@ -13,7 +13,7 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
     const [newCategoryName, setNewCategoryName] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('all');
-    const [editForm, setEditForm] = useState({ english: '', turkish: '', example: '' });
+    const [editForm, setEditForm] = useState({ english: '', turkish: '', example: '', partOfSpeech: '' });
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     // Pagination state
@@ -31,7 +31,8 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
         setEditForm({
             english: word.english,
             turkish: word.turkish,
-            example: word.example || ''
+            example: word.example || '',
+            partOfSpeech: word.partOfSpeech || ''
         });
         setIsCreatingNew(false);
         setNewCategoryName('');
@@ -40,7 +41,7 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
     const cancelEditing = () => {
         setEditingId(null);
         setTempCategory('');
-        setEditForm({ english: '', turkish: '', example: '' });
+        setEditForm({ english: '', turkish: '', example: '', partOfSpeech: '' });
         setIsCreatingNew(false);
         setNewCategoryName('');
     };
@@ -168,13 +169,6 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
                 </div>
             </div>
 
-            <DataManagement
-                words={words}
-                history={history}
-                onImportWords={onImportWords}
-                onImportHistory={onImportHistory}
-            />
-
             <WordPacks onImportWords={onImportWords} />
 
             {words.length === 0 ? (
@@ -236,6 +230,23 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
                                                         className="category-edit-input"
                                                     />
                                                 )}
+
+                                                <select
+                                                    value={editForm.partOfSpeech}
+                                                    onChange={(e) => setEditForm({ ...editForm, partOfSpeech: e.target.value })}
+                                                    className="category-edit-select"
+                                                    style={{ minWidth: '100px' }}
+                                                >
+                                                    <option value="">Type (Opt)</option>
+                                                    <option value="noun">Noun</option>
+                                                    <option value="verb">Verb</option>
+                                                    <option value="adjective">Adjective</option>
+                                                    <option value="adverb">Adverb</option>
+                                                    <option value="pronoun">Pronoun</option>
+                                                    <option value="preposition">Preposition</option>
+                                                    <option value="conjunction">Conjunction</option>
+                                                    <option value="interjection">Interjection</option>
+                                                </select>
                                             </div>
 
                                             <div className="edit-actions-row">
@@ -268,6 +279,11 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
                                             >
                                                 {word.category || 'General'}
                                             </div>
+                                            {word.partOfSpeech && (
+                                                <div className="word-pos-badge">
+                                                    {word.partOfSpeech}
+                                                </div>
+                                            )}
                                         </>
                                     )}
                                 </div>

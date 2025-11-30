@@ -131,6 +131,12 @@ export const QuizQuestion = ({ question, onSubmit, questionNumber, totalQuestion
                     {question.type === 'reverse' && '🔄 Reverse Translation'}
                 </div>
 
+                {question.word && question.word.partOfSpeech && (
+                    <div className="question-pos-badge">
+                        {question.word.partOfSpeech}
+                    </div>
+                )}
+
                 <div className="question-text-wrapper">
                     {question.type === 'listening' ? (
                         <div

@@ -106,41 +106,7 @@ export const useQuizHistory = () => {
         await batch.commit();
     }, [currentUser, history]);
 
-    const importHistory = useCallback(async (newHistory) => {
-        if (!Array.isArray(newHistory)) return;
 
-        if (!currentUser) {
-            setHistory(prev => {
-                const historyMap = new Map(prev.map(h => [h.id, h]));
-                newHistory.forEach(h => {
-                    const entryWithId = h.id ? h : { ...h, id: Date.now() + Math.random() };
-                    historyMap.set(entryWithId.id, entryWithId);
-                });
-                return Array.from(historyMap.values()).sort((a, b) => new Date(b.date) - new Date(a.date));
-            });
-            return;
-        }
-
-        let count = 0;
-        let currentBatch = writeBatch(db);
-
-        for (const h of newHistory) {
-            const docRef = doc(collection(db, 'users', currentUser.uid, 'history'));
-            const { id, ...data } = h;
-            currentBatch.set(docRef, data);
-
-            count++;
-            if (count >= 450) {
-                await currentBatch.commit();
-                currentBatch = writeBatch(db);
-                count = 0;
-            }
-        }
-
-        if (count > 0) {
-            await currentBatch.commit();
-        }
-    }, [currentUser]);
 
     const getStreakStatus = useCallback(() => {
         if (history.length === 0) return { streak: 0, canRecover: false };
@@ -204,7 +170,7 @@ export const useQuizHistory = () => {
         addQuizResult,
         deleteQuizResult,
         clearHistory,
-        importHistory,
+
         getStreakStatus
     };
 };

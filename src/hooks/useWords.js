@@ -67,13 +67,14 @@ export const useWords = () => {
         }
     }, [words, currentUser, loading]);
 
-    const addWord = async (englishWord, turkishMeaning, category = 'General', exampleSentence = '', emoji = '') => {
+    const addWord = async (englishWord, turkishMeaning, category = 'General', exampleSentence = '', emoji = '', partOfSpeech = '') => {
         const newWordData = {
             english: englishWord.trim(),
             turkish: turkishMeaning.trim(),
             category: category.trim() || 'General',
             example: exampleSentence.trim(),
             emoji: emoji.trim(),
+            partOfSpeech: partOfSpeech.trim(),
             level: 1,
             nextReview: new Date().toISOString(),
             createdAt: new Date().toISOString(),

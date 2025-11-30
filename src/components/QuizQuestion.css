@@ -44,27 +44,6 @@
     background: var(--bg-card);
     backdrop-filter: blur(16px);
     border: 1px solid var(--border-color);
-    border-radius: 20px;
-    padding: 1.5rem;
-    box-shadow: var(--shadow);
-    max-width: 100%;
-}
-
-.question-type-badge {
-    display: inline-block;
-    background: rgba(99, 102, 241, 0.1);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 0.25rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--accent-primary);
-    margin-bottom: 1rem;
-}
-
-.question-text-wrapper {
-    display: flex;
-    align-items: center;
     justify-content: center;
     gap: 1rem;
     margin-bottom: 0.5rem;

@@ -19,7 +19,7 @@ import './App.css';
 function AuthenticatedApp() {
   const { currentUser, logout } = useAuth();
   const { words, loading: wordsLoading, addWord, deleteWord, deleteWords, updateWordCategory, updateWord, importWords, updateWordStats, restoreWord, restoreWords } = useWords();
-  const { history, addQuizResult, deleteQuizResult, clearHistory, importHistory, getStreakStatus } = useQuizHistory();
+  const { history, addQuizResult, deleteQuizResult, clearHistory, getStreakStatus } = useQuizHistory();
   const quiz = useQuiz(words);
   const { toasts, addToast, removeToast } = useToast();
   const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'manage', 'study', 'quiz', 'history', or 'profile'
@@ -295,7 +295,7 @@ function AuthenticatedApp() {
                 importWords(newWords);
                 addToast(`Imported ${newWords.length} words!`, 'success');
               }}
-              onImportHistory={importHistory}
+
               categories={['General', ...new Set(words.map(w => w.category || 'General'))]}
             />
           </div>

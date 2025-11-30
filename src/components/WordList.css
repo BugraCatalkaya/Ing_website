@@ -210,9 +210,18 @@
     border-color: var(--accent-primary);
 }
 
-.edit-icon {
-    font-size: 0.7rem;
-    opacity: 0.6;
+.word-pos-badge {
+    font-size: 0.75rem;
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    align-self: flex-start;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    text-transform: capitalize;
 }
 
 /* Edit Form Styles */

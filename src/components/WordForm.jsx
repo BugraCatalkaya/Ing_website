@@ -12,13 +12,14 @@ export const WordForm = ({ onAddWord, categories }) => {
     const [newCategory, setNewCategory] = useState('');
     const [isCreatingCategory, setIsCreatingCategory] = useState(false);
     const [isTranslating, setIsTranslating] = useState(false);
-
     const [wordForms, setWordForms] = useState([]);
+    const [selectedPartOfSpeech, setSelectedPartOfSpeech] = useState('');
 
     const handleAutoTranslate = async () => {
         if (!englishWord.trim()) return;
         setIsTranslating(true);
         setWordForms([]); // Clear previous forms
+        setSelectedPartOfSpeech(''); // Clear selection
         try {
             // 1. Get Turkish Translation
             const translateRes = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(englishWord)}&langpair=en|tr`);
@@ -44,18 +45,21 @@ export const WordForm = ({ onAddWord, categories }) => {
                 // Find the maximum number of definitions any POS has
                 const maxCount = Math.max(...posCounts.map(p => p.count));
 
-                // Filter logic:
-                // If the most common usage has 3 or more definitions,
-                // exclude usages that only have 1 definition (likely rare/archaic).
+                // Filter logic
                 const filteredForms = posCounts
                     .filter(p => {
-                        if (p.count === maxCount) return true; // Always keep the main one
-                        if (maxCount >= 3 && p.count === 1) return false; // Filter rare ones
+                        if (p.count === maxCount) return true;
+                        if (maxCount >= 3 && p.count === 1) return false;
                         return true;
                     })
                     .map(p => p.pos);
 
                 setWordForms([...new Set(filteredForms)]);
+
+                // Auto-select the first one if available
+                if (filteredForms.length > 0) {
+                    setSelectedPartOfSpeech(filteredForms[0]);
+                }
 
                 let foundExample = '';
                 for (const meaning of dictData[0].meanings) {
@@ -88,12 +92,13 @@ export const WordForm = ({ onAddWord, categories }) => {
         const categoryToUse = isCreatingCategory ? newCategory.trim() : selectedCategory;
         if (!categoryToUse) return;
 
-        onAddWord(englishWord, turkishMeaning, categoryToUse, exampleSentence, emoji);
+        onAddWord(englishWord, turkishMeaning, categoryToUse, exampleSentence, emoji, selectedPartOfSpeech);
         setEnglishWord('');
         setTurkishMeaning('');
         setExampleSentence('');
         setEmoji('');
         setWordForms([]); // Clear forms
+        setSelectedPartOfSpeech('');
         // Do not reset category so user can add multiple words to same category
         if (isCreatingCategory) {
             setSelectedCategory(categoryToUse);
@@ -152,14 +157,47 @@ export const WordForm = ({ onAddWord, categories }) => {
                     </div>
                     {wordForms.length > 0 && (
                         <div className="word-forms-suggestions">
-                            <span className="forms-label">Also used as:</span>
+                            <span className="forms-label">Part of Speech (Select one):</span>
                             <div className="forms-list">
                                 {wordForms.map(form => (
-                                    <span key={form} className="form-badge">{form}</span>
+                                    <button
+                                        key={form}
+                                        type="button"
+                                        className={`form-badge ${selectedPartOfSpeech === form ? 'selected' : ''}`}
+                                        onClick={() => setSelectedPartOfSpeech(form)}
+                                    >
+                                        {form}
+                                    </button>
                                 ))}
                             </div>
                         </div>
                     )}
+                    {/* Manual POS selector if no suggestions or user wants to change */}
+                    <div style={{ marginTop: '0.5rem' }}>
+                        <select
+                            value={selectedPartOfSpeech}
+                            onChange={(e) => setSelectedPartOfSpeech(e.target.value)}
+                            style={{
+                                padding: '0.4rem',
+                                borderRadius: '6px',
+                                border: '1px solid var(--border-color)',
+                                background: 'rgba(30, 35, 60, 0.4)',
+                                color: 'var(--text-secondary)',
+                                fontSize: '0.85rem',
+                                width: 'auto'
+                            }}
+                        >
+                            <option value="">Select Type (Optional)</option>
+                            <option value="noun">Noun (İsim)</option>
+                            <option value="verb">Verb (Fiil)</option>
+                            <option value="adjective">Adjective (Sıfat)</option>
+                            <option value="adverb">Adverb (Zarf)</option>
+                            <option value="pronoun">Pronoun (Zamir)</option>
+                            <option value="preposition">Preposition (Edat)</option>
+                            <option value="conjunction">Conjunction (Bağlaç)</option>
+                            <option value="interjection">Interjection (Ünlem)</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div className="form-row">
