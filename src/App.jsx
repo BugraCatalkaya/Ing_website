@@ -473,6 +473,9 @@ function AuthenticatedApp() {
             onStudySet={(folder, set) => {
               updateHash('study', folder, set);
             }}
+            onQuizFolder={(folder) => {
+              updateHash('quiz', folder);
+            }}
             onQuizSet={(folder, set) => {
               updateHash('quiz', folder, set);
             }}

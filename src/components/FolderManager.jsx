@@ -15,6 +15,7 @@ export const FolderManager = ({
     onCreateSet,
     onStudyFolder,
     onStudySet,
+    onQuizFolder,
     onQuizSet,
     onAddWord,
     onDeleteWord,
@@ -124,6 +125,13 @@ export const FolderManager = ({
                     <div className="header-actions">
                         <button className="study-btn" onClick={() => onStudyFolder(activeFolder)}>
                             📚 Study Folder
+                        </button>
+                        <button
+                            className="study-btn"
+                            onClick={() => onQuizFolder(activeFolder)}
+                            style={{ marginLeft: '0.5rem', background: '#8b5cf6' }}
+                        >
+                            🎯 Quiz Folder
                         </button>
                         <button className="create-btn" onClick={() => setIsCreatingSet(true)}>
                             + New Set

@@ -124,7 +124,7 @@ export const useQuiz = (words) => {
             quizWords = quizWords.filter(w => (w.folder || 'General') === folder);
         }
 
-        const quizQuestions = questionsToUse || generateQuestions(quizWords, 10, mode);
+        const quizQuestions = questionsToUse || generateQuestions(quizWords, 25, mode);
         if (!quizQuestions) return false;
 
         setQuestions(quizQuestions);
