@@ -3,7 +3,7 @@ import { QuizQuestion } from './QuizQuestion';
 import { QuizResults } from './QuizResults';
 import './Quiz.css';
 
-export const Quiz = ({ quiz, words, onQuizComplete }) => {
+export const Quiz = ({ quiz, words, onQuizComplete, initialFolder, initialCategory, onExit }) => {
     const {
         questions,
         currentQuestion,
@@ -18,19 +18,26 @@ export const Quiz = ({ quiz, words, onQuizComplete }) => {
         resetQuiz
     } = quiz;
 
-    const [selectedCategory, setSelectedCategory] = useState('all');
-    const [selectedFolder, setSelectedFolder] = useState('all');
+    const [selectedCategory, setSelectedCategory] = useState(initialCategory || 'all');
+    const [selectedFolder, setSelectedFolder] = useState(initialFolder || 'all');
     const [showExitConfirm, setShowExitConfirm] = useState(false);
     const savedRef = useRef(false);
 
     const categories = ['all', ...new Set(words.map(w => w.category || 'General'))];
     const folders = ['all', ...new Set(words.map(w => w.folder || 'General'))];
 
+    useEffect(() => {
+        if (initialFolder) setSelectedFolder(initialFolder);
+        if (initialCategory) setSelectedCategory(initialCategory);
+    }, [initialFolder, initialCategory]);
+
     const filteredWords = words.filter(w => {
         const matchesCategory = selectedCategory === 'all' || (w.category || 'General') === selectedCategory;
         const matchesFolder = selectedFolder === 'all' || (w.folder || 'General') === selectedFolder;
         return matchesCategory && matchesFolder;
     });
+
+    const isContextLocked = !!initialFolder || !!initialCategory;
 
     // Reset saved state when quiz is not complete (new quiz started)
     useEffect(() => {
@@ -52,42 +59,48 @@ export const Quiz = ({ quiz, words, onQuizComplete }) => {
             <div className="quiz-container">
                 <div className="quiz-start">
                     <div className="quiz-icon">🎯</div>
-                    <h2>Ready to Test Your Knowledge?</h2>
+                    <h2>
+                        {initialCategory ? `Quiz: ${initialCategory}` :
+                            initialFolder ? `Quiz: ${initialFolder}` :
+                                'Ready to Test Your Knowledge?'}
+                    </h2>
                     <p className="quiz-description">
                         Take a quiz with 10 random questions from your vocabulary list.
                     </p>
 
-                    <div className="category-selection">
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label htmlFor="quiz-folder" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Select Folder:</label>
-                            <select
-                                id="quiz-folder"
-                                value={selectedFolder}
-                                onChange={(e) => setSelectedFolder(e.target.value)}
-                                className="category-select"
-                            >
-                                <option value="all">All Folders</option>
-                                {folders.filter(f => f !== 'all').map(f => (
-                                    <option key={f} value={f}>📁 {f}</option>
-                                ))}
-                            </select>
-                        </div>
+                    {!isContextLocked && (
+                        <div className="category-selection">
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label htmlFor="quiz-folder" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Select Folder:</label>
+                                <select
+                                    id="quiz-folder"
+                                    value={selectedFolder}
+                                    onChange={(e) => setSelectedFolder(e.target.value)}
+                                    className="category-select"
+                                >
+                                    <option value="all">All Folders</option>
+                                    {folders.filter(f => f !== 'all').map(f => (
+                                        <option key={f} value={f}>📁 {f}</option>
+                                    ))}
+                                </select>
+                            </div>
 
-                        <div>
-                            <label htmlFor="quiz-category" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Select Category:</label>
-                            <select
-                                id="quiz-category"
-                                value={selectedCategory}
-                                onChange={(e) => setSelectedCategory(e.target.value)}
-                                className="category-select"
-                            >
-                                <option value="all">All Categories</option>
-                                {categories.filter(c => c !== 'all').map(c => (
-                                    <option key={c} value={c}>{c}</option>
-                                ))}
-                            </select>
+                            <div>
+                                <label htmlFor="quiz-category" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Select Category:</label>
+                                <select
+                                    id="quiz-category"
+                                    value={selectedCategory}
+                                    onChange={(e) => setSelectedCategory(e.target.value)}
+                                    className="category-select"
+                                >
+                                    <option value="all">All Categories</option>
+                                    {categories.filter(c => c !== 'all').map(c => (
+                                        <option key={c} value={c}>{c}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {filteredWords.length < 4 ? (
                         <div className="insufficient-words">
@@ -163,6 +176,18 @@ export const Quiz = ({ quiz, words, onQuizComplete }) => {
                             📝 Review Mode - Practice Your Mistakes
                         </div>
                     )}
+
+                    {onExit && (
+                        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+                            <button
+                                onClick={onExit}
+                                className="cancel-btn"
+                                style={{ padding: '0.8rem 1.5rem', fontSize: '1rem' }}
+                            >
+                                Return to Set 📁
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -176,6 +201,7 @@ export const Quiz = ({ quiz, words, onQuizComplete }) => {
                     onReviewWrong={startReviewQuiz}
                     onRetake={resetQuiz}
                     reviewMode={reviewMode}
+                    onExit={onExit}
                 />
             </div>
         );
@@ -208,6 +234,7 @@ export const Quiz = ({ quiz, words, onQuizComplete }) => {
                                 onClick={() => {
                                     setShowExitConfirm(false);
                                     resetQuiz();
+                                    if (onExit) onExit();
                                 }}
                             >
                                 Quit Quiz

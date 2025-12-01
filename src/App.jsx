@@ -14,7 +14,9 @@ import { OnboardingWizard } from './components/OnboardingWizard';
 import { Profile } from './components/Profile';
 import { ProfileDropdown } from './components/ProfileDropdown';
 import { Toast, useToast } from './components/Toast';
+import { Sidebar } from './components/Sidebar';
 import './App.css';
+import { FolderManager } from './components/FolderManager';
 
 function AuthenticatedApp() {
   const { currentUser, logout } = useAuth();
@@ -22,11 +24,138 @@ function AuthenticatedApp() {
   const { history, addQuizResult, deleteQuizResult, clearHistory, getStreakStatus } = useQuizHistory();
   const quiz = useQuiz(words);
   const { toasts, addToast, removeToast } = useToast();
-  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'manage', 'study', 'quiz', 'history', or 'profile'
+  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'folders', 'manage', 'study', 'quiz', 'history', 'profile'
   const [isRecovering, setIsRecovering] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [selectedFolderFilter, setSelectedFolderFilter] = useState('all');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Folder & Set Management State
+  const [folders, setFolders] = useState(() => {
+    const saved = localStorage.getItem('user_folders');
+    return saved ? JSON.parse(saved) : ['General'];
+  });
+  const [activeFolder, setActiveFolder] = useState(null);
+  const [activeSet, setActiveSet] = useState(null);
+  const [studyFilter, setStudyFilter] = useState(null); // { folder: string, set?: string }
+  const [quizFilter, setQuizFilter] = useState(null); // { folder: string, set?: string }
+  const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
+  const [newFolderNameHeader, setNewFolderNameHeader] = useState('');
+  const [customSets, setCustomSets] = useState(() => {
+    const saved = localStorage.getItem('user_sets');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Sync folders with words and localStorage
+  useEffect(() => {
+    const wordFolders = [...new Set(words.map(w => w.folder || 'General'))];
+    setFolders(prev => {
+      const combined = [...new Set([...prev, ...wordFolders])].sort();
+      // Only update if different to avoid loops
+      if (JSON.stringify(combined) !== JSON.stringify(prev)) {
+        return combined;
+      }
+      return prev;
+    });
+  }, [words]);
+
+  useEffect(() => {
+    localStorage.setItem('user_folders', JSON.stringify(folders));
+  }, [folders]);
+
+  useEffect(() => {
+    localStorage.setItem('user_sets', JSON.stringify(customSets));
+  }, [customSets]);
+
+  // Hash-based routing helper
+  const updateHash = (view, folder = null, set = null) => {
+    let hash = `#${view}`;
+    if (folder) {
+      hash += `/${encodeURIComponent(folder)}`;
+      if (set) {
+        hash += `/${encodeURIComponent(set)}`;
+      }
+    }
+    window.location.hash = hash;
+  };
+
+  // Handle hash changes (Browser Back/Forward)
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1); // Remove #
+      if (!hash) {
+        setCurrentView('dashboard');
+        setActiveFolder(null);
+        setActiveSet(null);
+        setStudyFilter(null);
+        setQuizFilter(null);
+        return;
+      }
+
+      const parts = hash.split('/').map(decodeURIComponent);
+      const view = parts[0];
+      const folder = parts[1] || null;
+      const set = parts[2] || null;
+
+      // Handle special study routes with filters
+      if (view === 'study' && folder) {
+        setStudyFilter({ folder, set });
+        setCurrentView('study');
+        setActiveFolder(null); // Clear folder manager state
+        setActiveSet(null);
+        setQuizFilter(null);
+        return;
+      }
+
+      if (view === 'quiz' && folder) {
+        setQuizFilter({ folder, set });
+        setCurrentView('quiz');
+        setActiveFolder(null);
+        setActiveSet(null);
+        setStudyFilter(null);
+        return;
+      }
+
+      setCurrentView(view);
+
+      if (view === 'folders') {
+        setActiveFolder(folder);
+        setActiveSet(set);
+        setStudyFilter(null); // Clear study filter
+        setQuizFilter(null);
+      } else {
+        setActiveFolder(null);
+        setActiveSet(null);
+        setStudyFilter(null); // Clear study filter
+        setQuizFilter(null);
+      }
+    };
+
+    // Initial load
+    handleHashChange();
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const handleCreateFolder = (name) => {
+    if (!name.trim()) return;
+    setFolders(prev => [...new Set([...prev, name.trim()])].sort());
+    addToast(`Folder "${name}" created!`, 'success');
+    // Navigate to the new folder
+    updateHash('folders', name.trim());
+  };
+
+  const handleCreateSet = (folder, set) => {
+    if (!set.trim()) return;
+    setCustomSets(prev => {
+      if (prev.some(s => s.folder === folder && s.set === set)) return prev;
+      return [...prev, { folder, set }];
+    });
+    addToast(`Set "${set}" created!`, 'success');
+    updateHash('folders', folder, set);
+  };
 
   // Close login modal if user logs in
   useEffect(() => {
@@ -38,7 +167,7 @@ function AuthenticatedApp() {
   // Redirect to dashboard on logout if currently on profile page
   useEffect(() => {
     if (!currentUser && currentView === 'profile') {
-      setCurrentView('dashboard');
+      updateHash('dashboard');
     }
   }, [currentUser, currentView]);
 
@@ -96,14 +225,14 @@ function AuthenticatedApp() {
       if (window.confirm('⚠️ You are currently taking a quiz.\n\nAre you sure you want to exit? Your progress will be lost.')) {
         quiz.resetQuiz();
         setIsRecovering(false);
-        setCurrentView(view);
+        updateHash(view);
       }
     } else {
       // If leaving quiz view and quiz is finished, reset it so it doesn't trigger save again on return
       if (currentView === 'quiz' && quiz.isComplete) {
         quiz.resetQuiz();
       }
-      setCurrentView(view);
+      updateHash(view);
     }
   };
 
@@ -131,6 +260,16 @@ function AuthenticatedApp() {
       }
     }
   }, [addQuizResult, isRecovering, updateWordStats]);
+
+  // Filter words for Study mode
+  const getStudyWords = () => {
+    if (!studyFilter) return words;
+    return words.filter(w => {
+      const matchFolder = !studyFilter.folder || (w.folder || 'General') === studyFilter.folder;
+      const matchSet = !studyFilter.set || (w.category || 'General') === studyFilter.set;
+      return matchFolder && matchSet;
+    });
+  };
 
   return (
     <div className="app">
@@ -176,6 +315,46 @@ function AuthenticatedApp() {
         </div>
       )}
 
+      {/* Create Folder Modal (Header) */}
+      {showCreateFolderModal && (
+        <div className="modal-overlay" onClick={(e) => {
+          if (e.target.className === 'modal-overlay') setShowCreateFolderModal(false);
+        }}>
+          <div className="modal-content">
+            <h3>Create New Folder</h3>
+            <input
+              type="text"
+              value={newFolderNameHeader}
+              onChange={(e) => setNewFolderNameHeader(e.target.value)}
+              placeholder="Folder Name"
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)',
+                background: 'rgba(30, 35, 60, 0.6)',
+                color: 'white',
+                marginBottom: '1.5rem',
+                fontSize: '1rem'
+              }}
+              autoFocus
+            />
+            <div className="modal-actions">
+              <button onClick={() => {
+                if (newFolderNameHeader.trim()) {
+                  handleCreateFolder(newFolderNameHeader);
+                  setNewFolderNameHeader('');
+                  setShowCreateFolderModal(false);
+                  // Optionally navigate to folders view
+                  setCurrentView('folders');
+                }
+              }} className="confirm-delete-btn" style={{ background: 'var(--accent-primary)' }}>Create</button>
+              <button onClick={() => setShowCreateFolderModal(false)} className="cancel-btn">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showWizard && (
         <OnboardingWizard
           onComplete={handleWizardComplete}
@@ -197,52 +376,57 @@ function AuthenticatedApp() {
           />
         ))}
       </div>
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        currentView={currentView}
+        onViewChange={handleViewChange}
+        user={currentUser}
+        onLogout={logout}
+        onLoginClick={() => setShowLoginModal(true)}
+      />
 
       <header className="app-header">
-        <div className="logo">
-          <span className="logo-icon">🧠</span>
-          <h1>WordMaster</h1>
-        </div>
-        <nav className="main-nav">
+        <div className="header-left">
           <button
-            className={currentView === 'dashboard' ? 'active' : ''}
+            className="hamburger-btn"
+            onClick={() => setIsSidebarOpen(true)}
+            aria-label="Open menu"
+          >
+            <span className="hamburger-line"></span>
+            <span className="hamburger-line"></span>
+            <span className="hamburger-line"></span>
+          </button>
+
+          <div
+            className="logo"
             onClick={() => handleViewChange('dashboard')}
+            style={{ cursor: 'pointer' }}
+            title="Go to Dashboard"
           >
-            Dashboard
-          </button>
+            <span className="logo-icon">🧠</span>
+            <h1>WordMaster</h1>
+          </div>
+        </div>
+
+        <div className="header-right">
           <button
-            className={currentView === 'manage' ? 'active' : ''}
-            onClick={() => handleViewChange('manage')}
+            className="login-btn-header"
+            style={{ marginRight: '1rem', padding: '0.5rem 1rem', fontSize: '1.2rem' }}
+            onClick={() => setShowCreateFolderModal(true)}
+            title="Create New Folder"
           >
-            Manage Words
-          </button>
-          <button
-            className={currentView === 'study' ? 'active' : ''}
-            onClick={() => handleViewChange('study')}
-          >
-            Study Cards
-          </button>
-          <button
-            className={currentView === 'quiz' ? 'active' : ''}
-            onClick={() => handleViewChange('quiz')}
-          >
-            Take Quiz
-          </button>
-          <button
-            className={currentView === 'history' ? 'active' : ''}
-            onClick={() => handleViewChange('history')}
-          >
-            History
+            +
           </button>
 
           {currentUser ? (
             <div className="profile-menu-wrapper">
               <button
-                className={currentView === 'profile' ? 'active' : ''}
+                className={`profile-btn-header ${currentView === 'profile' ? 'active' : ''}`}
                 onClick={() => handleViewChange('profile')}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
               >
-                👤 Profile
+                <span className="profile-icon">👤</span>
+                <span className="profile-text">Profile</span>
               </button>
               <ProfileDropdown
                 user={currentUser}
@@ -254,12 +438,11 @@ function AuthenticatedApp() {
             <button
               onClick={() => setShowLoginModal(true)}
               className="login-btn-header"
-              style={{ marginLeft: 'auto', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: 'none' }}
             >
               Login / Sign Up
             </button>
           )}
-        </nav>
+        </div>
       </header>
 
       <main className="app-content">
@@ -270,6 +453,62 @@ function AuthenticatedApp() {
             onNavigate={handleViewChange}
             onRecoverStreak={handleRecoverStreak}
             streakStatus={getStreakStatus()}
+          />
+        )}
+
+        {currentView === 'folders' && (
+          <FolderManager
+            words={words}
+            folders={folders}
+            customSets={customSets}
+            activeFolder={activeFolder}
+            activeSet={activeSet}
+            onNavigateFolder={(folder) => updateHash('folders', folder)}
+            onNavigateSet={(set) => updateHash('folders', activeFolder, set)}
+            onCreateFolder={handleCreateFolder}
+            onCreateSet={(setName) => handleCreateSet(activeFolder, setName)}
+            onStudyFolder={(folder) => {
+              updateHash('study', folder);
+            }}
+            onStudySet={(folder, set) => {
+              updateHash('study', folder, set);
+            }}
+            onQuizSet={(folder, set) => {
+              updateHash('quiz', folder, set);
+            }}
+            onAddWord={(...args) => {
+              addWord(...args);
+              addToast('Word added successfully!', 'success');
+            }}
+            onDeleteWord={handleDeleteWord}
+            onDeleteWords={handleDeleteWords}
+            onUpdateWord={(id, data) => {
+              updateWord(id, data);
+              addToast('Word updated!', 'success');
+            }}
+            onUpdateCategory={updateWordCategory}
+            onDeleteFolder={(folderName) => {
+              const wordsToDelete = words.filter(w => (w.folder || 'General') === folderName);
+              if (wordsToDelete.length > 0) {
+                deleteWords(wordsToDelete.map(w => w.id));
+              }
+              setFolders(prev => prev.filter(f => f !== folderName));
+              setCustomSets(prev => prev.filter(s => s.folder !== folderName));
+              addToast(`Folder "${folderName}" deleted`, 'success');
+              updateHash('folders');
+            }}
+            onDeleteSet={(folderName, setName) => {
+              const wordsToDelete = words.filter(w =>
+                (w.folder || 'General') === folderName &&
+                (w.category || 'General') === setName
+              );
+              if (wordsToDelete.length > 0) {
+                deleteWords(wordsToDelete.map(w => w.id));
+              }
+              setCustomSets(prev => prev.filter(s => !(s.folder === folderName && s.set === setName)));
+              addToast(`Set "${setName}" deleted`, 'success');
+              updateHash('folders', folderName);
+            }}
           />
         )}
 
@@ -286,6 +525,7 @@ function AuthenticatedApp() {
               }}
               categories={['General', ...new Set(words.map(w => w.category || 'General'))]}
               folders={['General', ...new Set(words.map(w => w.folder || 'General'))]}
+              words={words}
             />
             <WordList
               words={words}
@@ -309,14 +549,38 @@ function AuthenticatedApp() {
         )}
 
         {currentView === 'study' && (
-          <Flashcard words={words} />
+          <Flashcard
+            words={getStudyWords()}
+            initialFolder={studyFilter?.folder}
+            initialCategory={studyFilter?.set}
+            onExit={() => {
+              if (studyFilter?.folder && studyFilter?.set) {
+                updateHash('folders', studyFilter.folder, studyFilter.set);
+              } else if (studyFilter?.folder) {
+                updateHash('folders', studyFilter.folder);
+              } else {
+                updateHash('folders');
+              }
+            }}
+          />
         )}
 
         {currentView === 'quiz' && (
           <Quiz
             quiz={quiz}
             words={words}
+            initialFolder={quizFilter?.folder}
+            initialCategory={quizFilter?.set}
             onQuizComplete={handleQuizComplete}
+            onExit={() => {
+              if (quizFilter?.folder && quizFilter?.set) {
+                updateHash('folders', quizFilter.folder, quizFilter.set);
+              } else if (quizFilter?.folder) {
+                updateHash('folders', quizFilter.folder);
+              } else {
+                updateHash('folders');
+              }
+            }}
           />
         )}
 

@@ -13,11 +13,7 @@ export const Toast = ({ message, type = 'info', duration = 3000, onUndo, onClose
     return (
         <div className={`toast toast-${type}`}>
             <span className="toast-message">{message}</span>
-            {onUndo && (
-                <button className="toast-undo-btn" onClick={onUndo}>
-                    Undo ↩️
-                </button>
-            )}
+
             <button className="toast-close-btn" onClick={onClose}>✕</button>
         </div>
     );

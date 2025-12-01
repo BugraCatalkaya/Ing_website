@@ -5,7 +5,7 @@ import { useSpeech } from '../hooks/useSpeech';
 import { WordPacks } from './WordPacks';
 import './WordList.css';
 
-export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdateCategory, onUpdateWord, onImportWords, categories, selectedFolderFilter, onFolderFilterChange }) => {
+export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdateCategory, onUpdateWord, onImportWords, categories, selectedFolderFilter, onFolderFilterChange, forcedSetFilter, hideFilters }) => {
     const { speak } = useSpeech();
     const [editingId, setEditingId] = useState(null);
     const [tempCategory, setTempCategory] = useState('');
@@ -15,7 +15,7 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newFolderName, setNewFolderName] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedFilter, setSelectedFilter] = useState('all');
+    const [selectedFilter, setSelectedFilter] = useState(forcedSetFilter || 'all');
     // selectedFolderFilter is now a prop
     const [editForm, setEditForm] = useState({ english: '', turkish: '', example: '', partOfSpeech: '', folder: '' });
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -23,6 +23,13 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10; // Number of words to display per page
+
+    // Update selectedFilter if forcedSetFilter changes
+    useEffect(() => {
+        if (forcedSetFilter) {
+            setSelectedFilter(forcedSetFilter);
+        }
+    }, [forcedSetFilter]);
 
     // Reset currentPage to 1 whenever filters or search terms change
     useEffect(() => {
@@ -149,72 +156,102 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
         <div className="word-list-container">
             <div className="word-list-header">
                 <h2>Your Vocabulary ({filteredWords.length})</h2>
-                <div className="filter-controls">
-                    <div className="search-wrapper">
-                        <span className="search-icon">🔍</span>
-                        <input
-                            type="text"
-                            placeholder="Search words..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="search-input"
-                        />
-                        {searchTerm && (
+                {!hideFilters && (
+                    <div className="filter-controls">
+                        <div className="search-wrapper">
+                            <span className="search-icon">🔍</span>
+                            <input
+                                type="text"
+                                placeholder="Search words..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="search-input"
+                            />
+                            {searchTerm && (
+                                <button
+                                    className="clear-search-btn"
+                                    onClick={() => setSearchTerm('')}
+                                >✕</button>
+                            )}
+                        </div>
+
+                        <div className="filter-group">
+                            <label htmlFor="folder-filter" className="filter-label">Filter by Folder:</label>
+                            <select
+                                id="folder-filter"
+                                value={selectedFolderFilter}
+                                onChange={(e) => {
+                                    onFolderFilterChange(e.target.value);
+                                    if (!forcedSetFilter) setSelectedFilter('all'); // Reset set filter when folder changes, unless forced
+                                }}
+                                className="premium-filter-select"
+                            >
+                                <option value="all">All Folders</option>
+                                {allFolders.filter(f => f !== 'all').map(f => (
+                                    <option key={f} value={f}>
+                                        📁 {f}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="filter-group">
+                            <label htmlFor="category-filter" className="filter-label">Filter by Set:</label>
+                            <select
+                                id="category-filter"
+                                value={selectedFilter}
+                                onChange={(e) => setSelectedFilter(e.target.value)}
+                                className="premium-filter-select"
+                                disabled={!!forcedSetFilter}
+                            >
+                                <option value="all">All Sets</option>
+                                {/* Filter Sets based on selected Folder */}
+                                {['all', ...new Set(words
+                                    .filter(w => selectedFolderFilter === 'all' || (w.folder || 'General') === selectedFolderFilter)
+                                    .map(w => w.category || 'General')
+                                )].filter(c => c !== 'all').sort().map(c => (
+                                    <option key={c} value={c}>
+                                        {c}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {words.length > 0 && (
                             <button
-                                className="clear-search-btn"
-                                onClick={() => setSearchTerm('')}
-                            >✕</button>
+                                type="button"
+                                className="delete-category-btn"
+                                onClick={handleDeleteCategory}
+                                title="Delete filtered words"
+                                style={{ cursor: 'pointer', zIndex: 1000, position: 'relative' }}
+                            >
+                                🗑️
+                            </button>
                         )}
                     </div>
-
-                    <div className="filter-group">
-                        <label htmlFor="folder-filter" className="filter-label">Filter by Folder:</label>
-                        <select
-                            id="folder-filter"
-                            value={selectedFolderFilter}
-                            onChange={(e) => onFolderFilterChange(e.target.value)}
-                            className="category-filter-select"
-                        >
-                            <option value="all">All Folders</option>
-                            {allFolders.filter(f => f !== 'all').map(f => (
-                                <option key={f} value={f}>
-                                    📁 {f}
-                                </option>
-                            ))}
-                        </select>
+                )}
+                {/* Show simplified search if filters are hidden */}
+                {hideFilters && (
+                    <div className="filter-controls simple">
+                        <div className="search-wrapper" style={{ width: '100%' }}>
+                            <span className="search-icon">🔍</span>
+                            <input
+                                type="text"
+                                placeholder="Search in this set..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="search-input"
+                            />
+                            {searchTerm && (
+                                <button
+                                    className="clear-search-btn"
+                                    onClick={() => setSearchTerm('')}
+                                >✕</button>
+                            )}
+                        </div>
                     </div>
-
-                    <div className="filter-group">
-                        <label htmlFor="category-filter" className="filter-label">Filter by Set:</label>
-                        <select
-                            id="category-filter"
-                            value={selectedFilter}
-                            onChange={(e) => setSelectedFilter(e.target.value)}
-                            className="category-filter-select"
-                        >
-                            <option value="all">All Sets</option>
-                            {allCategories.filter(c => c !== 'all').map(c => (
-                                <option key={c} value={c}>
-                                    {c}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    {words.length > 0 && (
-                        <button
-                            type="button"
-                            className="delete-category-btn"
-                            onClick={handleDeleteCategory}
-                            title="Delete filtered words"
-                            style={{ cursor: 'pointer', zIndex: 1000, position: 'relative' }}
-                        >
-                            🗑️
-                        </button>
-                    )}
-                </div>
+                )}
             </div>
-
-            <WordPacks onImportWords={onImportWords} />
 
             {words.length === 0 ? (
                 <div className="empty-state">
@@ -329,7 +366,6 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
                                         <>
                                             <div className="word-main">
                                                 <div className="english-wrapper">
-                                                    {word.emoji && <span className="word-emoji">{word.emoji}</span>}
                                                     <div className="word-english">{word.english}</div>
                                                     <button
                                                         className="speak-btn-list"
@@ -406,6 +442,10 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
                     )}
                 </>
             )}
+
+            <div style={{ marginTop: '3rem' }}>
+                <WordPacks onImportWords={onImportWords} />
+            </div>
 
             {showDeleteConfirm && createPortal(
                 <div className="modal-overlay">

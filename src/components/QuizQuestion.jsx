@@ -50,16 +50,44 @@ export const QuizQuestion = ({ question, onSubmit, questionNumber, totalQuestion
         if (question.type === 'multiple-choice') {
             correct = answer === question.correctAnswer;
         } else {
-            const userAnswer = answer.trim().toLowerCase();
-            const correctAnswers = question.correctAnswer.split(',').map(a => a.trim().toLowerCase());
-            correct = correctAnswers.some(correctAns => userAnswer === correctAns);
+            const normalize = (str) => str.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "").trim();
+            const userParts = answer.split(',').map(normalize);
+            const correctParts = question.correctAnswer.split(',').map(normalize);
+            correct = userParts.some(uPart => correctParts.includes(uPart)) ||
+                normalize(answer) === normalize(question.correctAnswer);
         }
 
         if (correct) {
-            // Play success sound
-            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3'); // Simple chime sound
-            audio.volume = 0.5;
-            audio.play().catch(e => console.log('Audio play failed', e));
+            // Play success sound using Web Audio API (more reliable)
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    const ctx = new AudioContext();
+                    const start = ctx.currentTime;
+
+                    // Play a pleasant major chord (C5 - E5 - G5)
+                    [523.25, 659.25, 783.99].forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+
+                        osc.frequency.value = freq;
+                        osc.type = 'sine';
+
+                        // Smooth attack and release
+                        gain.gain.setValueAtTime(0, start + i * 0.08);
+                        gain.gain.linearRampToValueAtTime(0.1, start + i * 0.08 + 0.05);
+                        gain.gain.exponentialRampToValueAtTime(0.001, start + i * 0.08 + 0.4);
+
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+
+                        osc.start(start + i * 0.08);
+                        osc.stop(start + i * 0.08 + 0.45);
+                    });
+                }
+            } catch (e) {
+                console.error("Audio play failed", e);
+            }
         }
 
         setSubmitted(true);
@@ -79,9 +107,13 @@ export const QuizQuestion = ({ question, onSubmit, questionNumber, totalQuestion
             return answer === question.correctAnswer;
         } else {
             // Support multiple answers separated by comma
-            const userAnswer = answer.trim().toLowerCase();
-            const correctAnswers = question.correctAnswer.split(',').map(a => a.trim().toLowerCase());
-            return correctAnswers.some(correctAns => userAnswer === correctAns);
+            const normalize = (str) => str.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "").trim();
+
+            const userParts = answer.split(',').map(normalize);
+            const correctParts = question.correctAnswer.split(',').map(normalize);
+
+            return userParts.some(uPart => correctParts.includes(uPart)) ||
+                normalize(answer) === normalize(question.correctAnswer);
         }
     };
 
@@ -107,9 +139,23 @@ export const QuizQuestion = ({ question, onSubmit, questionNumber, totalQuestion
 
     const getPlaceholderText = () => {
         if (isListening) {
-            return speechDetected ? "Ses algılandı! Yazılıyor..." : "Dinleniyor... Konuşun!";
+            return speechDetected ? "Listening... Speaking detected!" : "Listening... Speak now!";
         }
-        return "Cevabı yazın veya mikrofona basın...";
+        return "Type answer...";
+    };
+
+    const handleGiveUp = () => {
+        if (submitted) return;
+        setSubmitted(true);
+        // Show correct answer by setting submitted to true, but don't play success sound
+
+        setTimeout(() => {
+            // Submit with a special marker or empty string to count as wrong
+            onSubmit(question.id, '__SKIPPED__');
+            setSubmitted(false);
+            setSelectedAnswer('');
+            setFillInAnswer('');
+        }, 2500); // Give enough time to read the answer
     };
 
     return (
@@ -131,12 +177,6 @@ export const QuizQuestion = ({ question, onSubmit, questionNumber, totalQuestion
                     {question.type === 'reverse' && '🔄 Reverse Translation'}
                 </div>
 
-                {question.word && question.word.partOfSpeech && (
-                    <div className="question-pos-badge">
-                        {question.word.partOfSpeech}
-                    </div>
-                )}
-
                 <div className="question-text-wrapper">
                     {question.type === 'listening' ? (
                         <div
@@ -149,9 +189,14 @@ export const QuizQuestion = ({ question, onSubmit, questionNumber, totalQuestion
                         </div>
                     ) : (
                         <>
-                            <h3 className="question-text">{question.question}</h3>
+                            <h3 className="question-text-v2">
+                                {question.question}
+                                {question.word && question.word.partOfSpeech && (
+                                    <span className="question-pos-suffix-v2"> ({question.word.partOfSpeech})</span>
+                                )}
+                            </h3>
                             <button
-                                className="speak-btn-quiz"
+                                className="speak-btn-quiz-v2"
                                 onClick={() => speak(question.question, question.type === 'reverse' ? 'tr-TR' : 'en-US')}
                                 title="Listen to question"
                             >
@@ -230,16 +275,27 @@ export const QuizQuestion = ({ question, onSubmit, questionNumber, totalQuestion
                     </div>
                 )}
 
-                <button
-                    className="submit-btn"
-                    onClick={handleSubmit}
-                    disabled={
-                        submitted ||
-                        (question.type === 'multiple-choice' ? !selectedAnswer : !fillInAnswer.trim())
-                    }
-                >
-                    {submitted ? 'Next Question...' : 'Submit Answer'}
-                </button>
+                <div className="quiz-actions">
+                    {!submitted && question.type !== 'multiple-choice' && (
+                        <button
+                            className="give-up-btn"
+                            onClick={handleGiveUp}
+                            title="I don't know the answer"
+                        >
+                            🤷 I don't know
+                        </button>
+                    )}
+                    <button
+                        className="submit-btn"
+                        onClick={handleSubmit}
+                        disabled={
+                            submitted ||
+                            (question.type === 'multiple-choice' ? !selectedAnswer : !fillInAnswer.trim())
+                        }
+                    >
+                        {submitted ? 'Next Question...' : 'Submit Answer'}
+                    </button>
+                </div>
             </div>
         </div>
     );

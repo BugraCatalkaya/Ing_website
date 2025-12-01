@@ -1,22 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSpeech } from '../hooks/useSpeech';
 import './WordForm.css';
 
-export const WordForm = ({ onAddWord, categories, folders = ['General'] }) => {
+export const WordForm = ({ onAddWord, categories, folders = ['General'], words = [], initialCategory, initialFolder }) => {
     const { speak } = useSpeech();
     const [englishWord, setEnglishWord] = useState('');
     const [turkishMeaning, setTurkishMeaning] = useState('');
     const [exampleSentence, setExampleSentence] = useState('');
-    const [emoji, setEmoji] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState(categories[0] || 'General');
+    const [selectedCategory, setSelectedCategory] = useState(initialCategory || categories[0] || 'General');
     const [newCategory, setNewCategory] = useState('');
     const [isCreatingCategory, setIsCreatingCategory] = useState(false);
-    const [selectedFolder, setSelectedFolder] = useState(folders[0] || 'General');
+    const [selectedFolder, setSelectedFolder] = useState(initialFolder || 'General');
     const [newFolder, setNewFolder] = useState('');
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
     const [isTranslating, setIsTranslating] = useState(false);
     const [wordForms, setWordForms] = useState([]);
     const [selectedPartOfSpeech, setSelectedPartOfSpeech] = useState('');
+
+    // Update state if props change (e.g. navigation)
+    useEffect(() => {
+        if (initialFolder) setSelectedFolder(initialFolder);
+        if (initialCategory) setSelectedCategory(initialCategory);
+    }, [initialFolder, initialCategory]);
+
+    // Filter categories based on selected folder
+    const filteredCategories = ['General', ...new Set(
+        words
+            .filter(w => (w.folder || 'General') === selectedFolder)
+            .map(w => w.category || 'General')
+    )].filter(c => c !== 'General').sort();
 
     const handleAutoTranslate = async () => {
         if (!englishWord.trim()) return;
@@ -25,8 +37,29 @@ export const WordForm = ({ onAddWord, categories, folders = ['General'] }) => {
             // 1. Get Turkish translation
             const translateRes = await fetch(`https://api.mymemory.translated.net/get?q=${englishWord}&langpair=en|tr`);
             const translateData = await translateRes.json();
-            if (translateData.responseData && translateData.responseData.translatedText) {
-                setTurkishMeaning(translateData.responseData.translatedText);
+
+            let finalTurkish = '';
+
+            if (translateData.matches && translateData.matches.length > 0) {
+                const uniqueTranslations = new Set();
+                translateData.matches.forEach(m => {
+                    const text = m.translation.trim();
+                    if (text && text.toLowerCase() !== englishWord.toLowerCase()) {
+                        uniqueTranslations.add(text);
+                    }
+                });
+
+                if (uniqueTranslations.size > 0) {
+                    finalTurkish = Array.from(uniqueTranslations).slice(0, 3).join(', ');
+                }
+            }
+
+            if (!finalTurkish && translateData.responseData && translateData.responseData.translatedText) {
+                finalTurkish = translateData.responseData.translatedText;
+            }
+
+            if (finalTurkish) {
+                setTurkishMeaning(finalTurkish);
             }
 
             // 2. Get English definition/examples/forms
@@ -71,11 +104,10 @@ export const WordForm = ({ onAddWord, categories, folders = ['General'] }) => {
 
         if (!categoryToUse || !folderToUse) return;
 
-        onAddWord(englishWord, turkishMeaning, categoryToUse, exampleSentence, emoji, selectedPartOfSpeech, folderToUse);
+        onAddWord(englishWord, turkishMeaning, categoryToUse, exampleSentence, '', selectedPartOfSpeech, folderToUse);
         setEnglishWord('');
         setTurkishMeaning('');
         setExampleSentence('');
-        setEmoji('');
         setWordForms([]); // Clear forms
         setSelectedPartOfSpeech('');
 
@@ -111,6 +143,7 @@ export const WordForm = ({ onAddWord, categories, folders = ['General'] }) => {
         } else {
             setIsCreatingFolder(false);
             setSelectedFolder(value);
+            setSelectedCategory('General'); // Reset category when folder changes
         }
     };
 
@@ -205,7 +238,7 @@ export const WordForm = ({ onAddWord, categories, folders = ['General'] }) => {
                         <button
                             type="button"
                             className="action-btn"
-                            onClick={() => speak(englishWord)}
+                            onClick={() => speak(exampleSentence || englishWord)}
                             title="Listen"
                         >
                             🔊
@@ -213,19 +246,7 @@ export const WordForm = ({ onAddWord, categories, folders = ['General'] }) => {
                     </div>
                 </div>
 
-                <div className="form-group">
-                    <label htmlFor="emoji">Emoji / Icon (Optional)</label>
-                    <input
-                        type="text"
-                        id="emoji"
-                        value={emoji}
-                        onChange={(e) => setEmoji(e.target.value)}
-                        placeholder="e.g., 🍎"
-                        className="emoji-input"
-                    />
-                </div>
-
-                {/* Insert Folder Selection Here */}
+                {/* Hierarchical Selection: Folder (Top) -> Set (Sub) */}
                 <div className="form-row">
                     <div className="form-group half">
                         <label htmlFor="folder">Folder (Group)</label>
@@ -235,12 +256,14 @@ export const WordForm = ({ onAddWord, categories, folders = ['General'] }) => {
                                 value={selectedFolder}
                                 onChange={handleFolderChange}
                                 className="category-select-input"
+                                disabled={!!initialFolder} // Lock if pre-filled
+                                style={initialFolder ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
                             >
                                 <option value="General">General</option>
                                 {uniqueFolders.map(f => (
                                     <option key={f} value={f}>{f}</option>
                                 ))}
-                                <option value="new_folder_custom_value">+ Create New Folder</option>
+                                {!initialFolder && <option value="new_folder_custom_value">+ Create New Folder</option>}
                             </select>
                         ) : (
                             <div className="new-category-input">
@@ -270,12 +293,14 @@ export const WordForm = ({ onAddWord, categories, folders = ['General'] }) => {
                                 value={selectedCategory}
                                 onChange={handleCategoryChange}
                                 className="category-select-input"
+                                disabled={!!initialCategory} // Lock if pre-filled
+                                style={initialCategory ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
                             >
                                 <option value="General">General</option>
-                                {uniqueCategories.map(c => (
+                                {filteredCategories.map(c => (
                                     <option key={c} value={c}>{c}</option>
                                 ))}
-                                <option value="new_category_custom_value">+ Create New Set</option>
+                                {!initialCategory && <option value="new_category_custom_value">+ Create New Set</option>}
                             </select>
                         ) : (
                             <div className="new-category-input">

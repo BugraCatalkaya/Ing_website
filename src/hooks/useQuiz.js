@@ -161,13 +161,15 @@ export const useQuiz = (words) => {
         } else {
             // Fill-in: case-insensitive, trim whitespace
             // Support multiple meanings separated by comma
-            const userAnswer = answer.trim().toLowerCase();
-            const correctAnswers = question.correctAnswer
-                .split(',')
-                .map(a => a.trim().toLowerCase());
+            const normalize = (str) => str.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "").trim();
 
-            // Check if user answer matches any of the correct answers
-            return correctAnswers.some(correctAns => userAnswer === correctAns);
+            const userParts = answer.split(',').map(normalize);
+            const correctParts = question.correctAnswer.split(',').map(normalize);
+
+            // Check if ANY of the user's provided meanings match ANY of the correct meanings
+            // OR if the user provided the FULL string exactly
+            return userParts.some(uPart => correctParts.includes(uPart)) ||
+                normalize(answer) === normalize(question.correctAnswer);
         }
     }, [questions]);
 
