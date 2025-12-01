@@ -65,7 +65,7 @@ export const Quiz = ({ quiz, words, onQuizComplete, initialFolder, initialCatego
                                 'Ready to Test Your Knowledge?'}
                     </h2>
                     <p className="quiz-description">
-                        Take a quiz with 10 random questions from your vocabulary list.
+                        Take a quiz with 25 random questions from your vocabulary list.
                     </p>
 
                     {!isContextLocked && (
@@ -111,7 +111,7 @@ export const Quiz = ({ quiz, words, onQuizComplete, initialFolder, initialCatego
                         <>
                             <div className="quiz-stats">
                                 <div className="stat">
-                                    <div className="stat-number">{Math.min(10, filteredWords.length)}</div>
+                                    <div className="stat-number">{Math.min(25, filteredWords.length)}</div>
                                     <div className="stat-label">Questions</div>
                                 </div>
                                 <div className="stat">
