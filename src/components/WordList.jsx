@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useSpeech } from '../hooks/useSpeech';
 
 import { WordPacks } from './WordPacks';
+import { DataManagement } from './DataManagement';
 import './WordList.css';
 
 export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdateCategory, onUpdateWord, onImportWords, categories, selectedFolderFilter, onFolderFilterChange, forcedSetFilter, hideFilters }) => {
@@ -445,6 +446,15 @@ export const WordList = ({ words, history, onDeleteWord, onDeleteWords, onUpdate
 
             <div style={{ marginTop: '3rem' }}>
                 <WordPacks onImportWords={onImportWords} />
+            </div>
+
+            <div style={{ marginTop: '2rem' }}>
+                <DataManagement
+                    words={words}
+                    history={history}
+                    onImportWords={onImportWords}
+                    onImportHistory={() => { }} // History import not needed here but prop required
+                />
             </div>
 
             {showDeleteConfirm && createPortal(
