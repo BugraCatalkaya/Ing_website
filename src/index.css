@@ -1,16 +1,30 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg-primary: #0a0e27;
-  --bg-secondary: #151932;
-  --bg-card: rgba(30, 35, 60, 0.6);
-  --accent-primary: #6366f1;
-  --accent-secondary: #8b5cf6;
-  --text-primary: #e2e8f0;
-  --text-secondary: #94a3b8;
-  --border-color: rgba(99, 102, 241, 0.2);
-  --shadow: 0 8px 32px rgba(99, 102, 241, 0.1);
-  --shadow-hover: 0 12px 48px rgba(99, 102, 241, 0.2);
+  /* Fresh Day Theme - Aydınlık ve Modern */
+  --bg-primary: #f8fafc;
+  /* Slate 50 - Çok Açık Gri/Mavi */
+  --bg-secondary: #ffffff;
+  /* Beyaz */
+  --bg-card: rgba(255, 255, 255, 0.85);
+  /* Yarı saydam Beyaz */
+
+  /* Canlı ve Enerjik Vurgu Renkleri */
+  --accent-primary: #0ea5e9;
+  /* Sky 500 - Canlı Mavi */
+  --accent-secondary: #6366f1;
+  /* Indigo 500 - Canlı İndigo */
+  --accent-tertiary: #14b8a6;
+  /* Teal 500 - Canlı Turkuaz */
+
+  --text-primary: #1e293b;
+  /* Slate 800 - Koyu Gri/Mavi */
+  --text-secondary: #64748b;
+  /* Slate 500 - Orta Gri */
+
+  --border-color: rgba(148, 163, 184, 0.3);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 * {
@@ -21,7 +35,9 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1f3a 100%);
+  /* Aydınlık ve ferah arka plan */
+  background: linear-gradient(to bottom right, #f8fafc, #e2e8f0);
+  background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
   line-height: 1.6;
@@ -36,28 +52,31 @@ body {
 
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--accent-primary);
-  border-radius: 4px;
+  background: #cbd5e1;
+  /* Slate 300 */
+  border-radius: 5px;
+  border: 2px solid var(--bg-primary);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-secondary);
+  background: var(--accent-primary);
 }
 
-/* Glassmorphism Effect */
+/* Glassmorphism Effect - Soft */
 .glass {
   background: var(--bg-card);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
   border-radius: 16px;
 }
 
@@ -88,6 +107,7 @@ input {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -99,6 +119,7 @@ input {
     opacity: 0;
     transform: translateX(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -106,9 +127,12 @@ input {
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.8;
   }

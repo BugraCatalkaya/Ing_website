@@ -184,7 +184,7 @@
 .study-category-select {
     padding: 0.75rem 1rem;
     padding-right: 2.5rem;
-    background: rgba(30, 35, 60, 0.6);
+    background: var(--bg-card);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
@@ -206,7 +206,7 @@
 }
 
 .study-category-select:hover {
-    background-color: rgba(30, 35, 60, 0.8);
+    background-color: var(--bg-card);
     border-color: var(--accent-primary);
     transform: translateY(-1px);
     box-shadow: 0 6px 12px rgba(99, 102, 241, 0.15);
@@ -215,12 +215,12 @@
 .study-category-select:focus {
     border-color: var(--accent-primary);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
-    background-color: rgba(30, 35, 60, 0.9);
+    background-color: var(--bg-card);
 }
 
 .study-category-select option {
-    background-color: #1e233c;
-    color: white;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
     padding: 10px;
 }
 
@@ -254,9 +254,9 @@
 }
 
 .speak-btn-card {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
+    background: rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: var(--text-primary);
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -272,7 +272,7 @@
 }
 
 .speak-btn-card:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.2);
     transform: scale(1.1);
 }
 

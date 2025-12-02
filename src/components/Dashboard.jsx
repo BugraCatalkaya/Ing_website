@@ -18,7 +18,7 @@ export const Dashboard = ({ words, history, streakStatus, onNavigate, onRecoverS
     return (
         <div className="dashboard-container">
             <div className="welcome-section">
-                <h2>Welcome back! 👋</h2>
+                <h2>Welcome! 👋</h2>
                 <p>Ready to learn some English today?</p>
             </div>
 

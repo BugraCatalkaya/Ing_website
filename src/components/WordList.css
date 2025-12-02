@@ -73,7 +73,7 @@
 
 .search-input {
     padding: 0.5rem 2rem 0.5rem 2.2rem;
-    background: rgba(30, 35, 60, 0.4);
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     color: var(--text-primary);
@@ -85,7 +85,7 @@
 .search-input:focus {
     border-color: var(--accent-primary);
     width: 240px;
-    background: rgba(30, 35, 60, 0.6);
+    background: var(--bg-card);
 }
 
 .clear-search-btn {
@@ -104,7 +104,7 @@
 }
 
 .clear-search-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.1);
     color: var(--text-primary);
 }
 
@@ -112,7 +112,7 @@
 .premium-filter-select {
     padding: 0.75rem 1rem;
     padding-right: 2.5rem;
-    background: rgba(30, 35, 60, 0.6);
+    background: var(--bg-card);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
@@ -133,7 +133,7 @@
 }
 
 .premium-filter-select:hover {
-    background-color: rgba(30, 35, 60, 0.8);
+    background-color: var(--bg-card);
     border-color: var(--accent-primary);
     transform: translateY(-1px);
     box-shadow: 0 6px 12px rgba(99, 102, 241, 0.15);
@@ -142,12 +142,12 @@
 .premium-filter-select:focus {
     border-color: var(--accent-primary);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
-    background-color: rgba(30, 35, 60, 0.9);
+    background-color: var(--bg-card);
 }
 
 .premium-filter-select option {
-    background-color: #1e233c;
-    color: white;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
     padding: 10px;
 }
 
@@ -224,7 +224,7 @@
 }
 
 .speak-btn-list:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.1);
     opacity: 1;
     transform: scale(1.1);
 }
@@ -273,10 +273,10 @@
     gap: 0.75rem;
     width: 100%;
     padding: 0.5rem;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.03);
     /* Slightly darker background for contrast */
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .edit-row {
@@ -290,9 +290,9 @@
 .edit-input,
 .category-edit-select,
 .category-edit-input {
-    background: rgba(30, 35, 60, 0.6);
+    background: var(--bg-card);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 10px;
     padding: 0.6rem 0.75rem;
     color: var(--text-primary);
@@ -311,7 +311,7 @@
 .category-edit-select:focus,
 .category-edit-input:focus {
     border-color: var(--accent-primary);
-    background: rgba(30, 35, 60, 0.8);
+    background: var(--bg-card);
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
@@ -382,8 +382,8 @@
 }
 
 .category-edit-select option {
-    background-color: #1e233c;
-    color: white;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
 }
 
 .word-english {
@@ -591,7 +591,7 @@
 }
 
 .cancel-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.05);
 }
 
 @keyframes scaleIn {

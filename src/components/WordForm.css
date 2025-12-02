@@ -52,7 +52,8 @@
 }
 
 .form-group input {
-    background: rgba(30, 35, 60, 0.4);
+    background: var(--bg-card);
+    color: var(--text-primary);
     border: 1px solid var(--border-color);
     border-radius: 10px;
     padding: 0.75rem 1rem;
@@ -73,7 +74,7 @@
 }
 
 .emoji-btn {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.05);
     border: 1px solid var(--border-color);
     border-radius: 4px;
     cursor: pointer;
@@ -128,9 +129,9 @@
 }
 
 .translate-btn-mini {
-    background: rgba(245, 158, 11, 0.1);
-    border: 1px solid rgba(245, 158, 11, 0.3);
-    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    color: #d97706;
     height: 42px;
     padding: 0 1rem;
     border-radius: 10px;
@@ -152,18 +153,22 @@
 }
 
 .translate-btn-mini:disabled {
-    opacity: 0.5;
+    opacity: 1;
+    background: rgba(203, 213, 225, 0.4);
+    border-color: rgba(203, 213, 225, 0.6);
+    color: #64748b;
     cursor: not-allowed;
 }
 
 .category-select-input {
     width: 100%;
     padding: 0.75rem 1rem;
-    background: rgba(30, 35, 60, 0.4);
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 10px;
     color: var(--text-primary);
     font-size: 0.95rem;
+    color: var(--text-primary);
     outline: none;
     transition: all 0.3s ease;
     cursor: pointer;
@@ -175,7 +180,7 @@
 .new-category-input input {
     flex: 1;
     padding: 0.75rem 1rem;
-    background: rgba(30, 35, 60, 0.4);
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 10px;
     color: var(--text-primary);
@@ -341,7 +346,7 @@
 .category-select-input {
     width: 100%;
     padding: 0.75rem 1rem;
-    background: rgba(30, 35, 60, 0.4);
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 10px;
     color: var(--text-primary);
@@ -357,7 +362,7 @@
 .new-category-input input {
     flex: 1;
     padding: 0.75rem 1rem;
-    background: rgba(30, 35, 60, 0.4);
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 10px;
     color: var(--text-primary);
@@ -476,7 +481,7 @@
     padding: 0.4rem 0.75rem;
     border-radius: 6px;
     border: 1px solid var(--border-color);
-    background: rgba(30, 35, 60, 0.4);
+    background: var(--bg-card);
     color: var(--text-primary);
     font-size: 0.85rem;
     width: auto;
@@ -487,10 +492,10 @@
 
 .pos-select-input:focus {
     border-color: var(--accent-primary);
-    background: rgba(30, 35, 60, 0.6);
+    background: var(--bg-card);
 }
 
 .pos-select-input option {
-    background-color: #1e233c;
-    color: #ffffff;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
 }

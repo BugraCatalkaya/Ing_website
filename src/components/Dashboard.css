@@ -13,7 +13,7 @@
 .welcome-section h2 {
     font-size: 2rem;
     margin-bottom: 0.5rem;
-    background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -101,7 +101,7 @@
 }
 
 .stat-card {
-    background: rgba(30, 35, 60, 0.4);
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: 1.5rem;
@@ -196,7 +196,7 @@
 }
 
 .action-btn.secondary {
-    background: rgba(30, 35, 60, 0.6);
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
 }
@@ -235,7 +235,7 @@
 
 .recent-activity,
 .last-quiz-summary {
-    background: rgba(30, 35, 60, 0.4);
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: 1.5rem;
@@ -261,7 +261,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.5rem;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(0, 0, 0, 0.03);
     border-radius: 8px;
     font-size: 0.9rem;
 }
