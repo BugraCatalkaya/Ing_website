@@ -17,6 +17,7 @@ import { Toast, useToast } from './components/Toast';
 import { Sidebar } from './components/Sidebar';
 import './App.css';
 import { FolderManager } from './components/FolderManager';
+import { Games } from './components/Games';
 
 function AuthenticatedApp() {
   const { currentUser, logout } = useAuth();
@@ -601,6 +602,13 @@ function AuthenticatedApp() {
             history={history}
             streakStatus={getStreakStatus()}
             onLogout={logout}
+          />
+        )}
+
+        {currentView === 'games' && (
+          <Games
+            words={words}
+            onExit={() => updateHash('dashboard')}
           />
         )}
       </main>

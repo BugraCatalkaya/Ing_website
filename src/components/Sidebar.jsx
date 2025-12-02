@@ -63,6 +63,13 @@ export const Sidebar = ({ isOpen, onClose, currentView, onViewChange, user, onLo
                         Take Quiz
                     </button>
                     <button
+                        className={`nav-item ${currentView === 'games' ? 'active' : ''}`}
+                        onClick={() => { onViewChange('games'); onClose(); }}
+                    >
+                        <span className="nav-icon">🎮</span>
+                        Game Zone
+                    </button>
+                    <button
                         className={`nav-item ${currentView === 'history' ? 'active' : ''}`}
                         onClick={() => { onViewChange('history'); onClose(); }}
                     >
