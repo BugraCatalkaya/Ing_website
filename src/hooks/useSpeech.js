@@ -21,10 +21,10 @@ export const useSpeech = () => {
         // Find voice based on language
         let selectedVoice = null;
         if (lang === 'en-US') {
-            selectedVoice = voices.find(voice =>
-                voice.name.includes('Google US English') ||
-                (voice.lang.includes('en-US') && !voice.name.includes('Microsoft'))
-            );
+            // Try to find a male voice first (Microsoft David on Windows) since the user didn't like the female one
+            selectedVoice = voices.find(voice => voice.name.includes('Microsoft David')) ||
+                voices.find(voice => voice.name.includes('Google US English')) ||
+                voices.find(voice => voice.lang === 'en-US');
         } else if (lang === 'tr-TR') {
             selectedVoice = voices.find(voice =>
                 voice.lang.includes('tr') || voice.lang.includes('TR')
