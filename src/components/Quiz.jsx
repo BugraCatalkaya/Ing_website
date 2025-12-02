@@ -86,14 +86,14 @@ export const Quiz = ({ quiz, words, onQuizComplete, initialFolder, initialCatego
                             </div>
 
                             <div>
-                                <label htmlFor="quiz-category" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Select Category:</label>
+                                <label htmlFor="quiz-category" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Select Set:</label>
                                 <select
                                     id="quiz-category"
                                     value={selectedCategory}
                                     onChange={(e) => setSelectedCategory(e.target.value)}
                                     className="category-select"
                                 >
-                                    <option value="all">All Categories</option>
+                                    <option value="all">All Sets</option>
                                     {categories.filter(c => c !== 'all').map(c => (
                                         <option key={c} value={c}>{c}</option>
                                     ))}

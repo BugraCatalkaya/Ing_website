@@ -204,7 +204,7 @@ export const Flashcard = ({ words, initialFolder, initialCategory, onExit }) => 
                                 }
                             }}
                         >
-                            <option value="all">All Categories</option>
+                            <option value="all">All Sets</option>
                             {categories.filter(c => c !== 'all').map(c => (
                                 <option key={c} value={c}>
                                     {c}
