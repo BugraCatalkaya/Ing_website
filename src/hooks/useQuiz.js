@@ -124,7 +124,9 @@ export const useQuiz = (words) => {
             quizWords = quizWords.filter(w => (w.folder || 'General') === folder);
         }
 
-        const quizQuestions = questionsToUse || generateQuestions(quizWords, 25, mode);
+        // Determine question count: 10 for specific sets/folders, 25 for general quiz
+        const questionCount = (category !== 'all' || folder !== 'all') ? 10 : 25;
+        const quizQuestions = questionsToUse || generateQuestions(quizWords, questionCount, mode);
         if (!quizQuestions) return false;
 
         setQuestions(quizQuestions);

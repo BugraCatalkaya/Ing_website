@@ -65,7 +65,7 @@ export const Quiz = ({ quiz, words, onQuizComplete, initialFolder, initialCatego
                                 'Ready to Test Your Knowledge?'}
                     </h2>
                     <p className="quiz-description">
-                        Take a quiz with 25 random questions from your vocabulary list.
+                        Take a quiz with {(selectedCategory !== 'all' || selectedFolder !== 'all') ? 10 : 25} random questions from your vocabulary list.
                     </p>
 
                     {!isContextLocked && (
